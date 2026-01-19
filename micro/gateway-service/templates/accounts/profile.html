@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Book Store{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-person"></i> My Profile</h4>
+                <small>Customer Service :8001</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px; font-size: 3rem;">
+                            <i class="bi bi-person"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <h3>{{ customer.name }}</h3>
+                        <p class="text-muted">
+                            <i class="bi bi-envelope"></i> {{ customer.email }}
+                        </p>
+                        <p class="text-muted">
+                            <i class="bi bi-calendar"></i> Member since: {{ customer.created_at|default:"N/A" }}
+                        </p>
+                        <hr>
+                        <a href="{% url 'cart' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-cart"></i> View Cart
+                        </a>
+                        <a href="{% url 'book_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-book"></i> Browse Books
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

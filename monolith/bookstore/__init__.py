@@ -1,0 +1,1 @@
+# Bookstore Monolithic Django Application
