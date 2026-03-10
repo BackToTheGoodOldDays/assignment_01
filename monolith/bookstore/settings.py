@@ -27,9 +27,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     # Custom apps
-    'accounts',
-    'books',
-    'cart',
+    # All domain logic is now in store/
+    'store',
 ]
 
 MIDDLEWARE = [
@@ -93,8 +92,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Custom User Model
-AUTH_USER_MODEL = 'accounts.Customer'
+# Nếu bạn có custom user model mới trong store, hãy sửa lại dòng này. Nếu không, hãy comment lại:
+AUTH_USER_MODEL = 'store.Customer'
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'

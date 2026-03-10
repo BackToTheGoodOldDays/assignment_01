@@ -1,10 +1,11 @@
 """
-URL configuration for Customer Service.
+URL configuration for customer_service project.
 """
+
 from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/customers/', include('customers.urls')),
+    path('api/', include('customer.urls')),
 ]

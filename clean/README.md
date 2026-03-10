@@ -2,6 +2,167 @@
 
 This is the **Clean Architecture** version of the Book Store Web System.
 
+---
+
+## 🎯 Clean Architecture là gì?
+
+**Clean Architecture** là kiến trúc **phân tầng** (layered) được thiết kế bởi Uncle Bob. Ý tưởng chính: **Business logic không phụ thuộc vào framework hay database**.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  FRAMEWORK (Django views, templates)                                │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │  INFRASTRUCTURE (Django ORM implementation)                   │  │
+│  │  ┌─────────────────────────────────────────────────────────┐  │  │
+│  │  │  INTERFACES (Repository interfaces - contracts)         │  │  │
+│  │  │  ┌───────────────────────────────────────────────────┐  │  │  │
+│  │  │  │  USE CASES (Application business logic)           │  │  │  │
+│  │  │  │  ┌─────────────────────────────────────────────┐  │  │  │  │
+│  │  │  │  │  DOMAIN (Entities - core business rules)    │  │  │  │  │
+│  │  │  │  │  Customer, Book, Cart                       │  │  │  │  │
+│  │  │  │  └─────────────────────────────────────────────┘  │  │  │  │
+│  │  │  └───────────────────────────────────────────────────┘  │  │  │
+│  │  └─────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+
+                    ↑ Dependencies chỉ hướng VÀO TRONG ↑
+```
+
+**Ưu điểm:**
+- ✅ Business logic độc lập với framework
+- ✅ Dễ test (không cần database để test use cases)
+- ✅ Có thể thay Django bằng Flask mà không sửa Domain/Use Cases
+
+**Nhược điểm:**
+- ❌ Phức tạp hơn Monolithic
+- ❌ Nhiều file, nhiều layer hơn
+
+---
+
+## 📁 Giải thích chi tiết từng Folder
+
+```
+clean/
+│
+├── domain/                  # 🎯 LAYER 1: DOMAIN (Lõi - Trung tâm)
+│   └── entities/            #    Chứa các ENTITY (thực thể nghiệp vụ)
+│       ├── customer.py      #    → Class Customer thuần Python
+│       ├── book.py          #    → Class Book thuần Python  
+│       └── cart.py          #    → Class Cart, CartItem thuần Python
+│                            #    ⚠️ KHÔNG import Django ở đây!
+│
+├── usecases/                # 💼 LAYER 2: USE CASES (Logic nghiệp vụ)
+│   ├── customer_usecases.py #    → RegisterCustomerUseCase, LoginUseCase
+│   ├── book_usecases.py     #    → GetAllBooksUseCase, GetBookByIdUseCase
+│   └── cart_usecases.py     #    → AddToCartUseCase, RemoveFromCartUseCase
+│                            #    ⚠️ Chỉ dùng Repository INTERFACE!
+│
+├── interfaces/              # 📋 LAYER 3: INTERFACES (Hợp đồng)
+│   └── repositories/        #    Chứa các INTERFACE (abstract class)
+│       ├── customer_repository.py  # → CustomerRepositoryInterface
+│       ├── book_repository.py      # → BookRepositoryInterface
+│       └── cart_repository.py      # → CartRepositoryInterface
+│                            #    ⚠️ Chỉ định nghĩa METHOD, không implement!
+│
+├── infrastructure/          # 🔧 LAYER 4: INFRASTRUCTURE (Triển khai)
+│   └── repositories/        #    IMPLEMENTATION của interfaces
+│       ├── django_customer_repository.py  # → Dùng Django ORM
+│       ├── django_book_repository.py      # → Dùng Django ORM
+│       └── django_cart_repository.py      # → Dùng Django ORM
+│                            #    ✅ Django ORM chỉ xuất hiện ở đây!
+│
+├── framework/               # 🌐 DJANGO FRAMEWORK (Lớp ngoài cùng)
+│   ├── settings.py          #    → Cấu hình Django
+│   ├── urls.py              #    → Định tuyến URL
+│   ├── models.py            #    → Django Models (ORM)
+│   ├── views.py             #    → Controllers - gọi Use Cases
+│   ├── forms.py             #    → Django Forms
+│   └── templates/           #    → HTML templates
+│
+└── sql/                     # 🗄️ DATABASE SCRIPTS
+    └── init_database.sql
+```
+
+---
+
+## 🔄 Luồng hoạt động (Request Flow)
+
+Khi người dùng xem danh sách sách `/books/`:
+
+```
+                            REQUEST: GET /books/
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ FRAMEWORK LAYER                                                     │
+│ ┌─────────────────────────────────────────────────────────────────┐ │
+│ │ views.py                                                        │ │
+│ │ def catalog_view(request):                                      │ │
+│ │     use_case = GetAllBooksUseCase(book_repository) ◄────────┐   │ │
+│ │     books = use_case.execute()                              │   │ │
+│ │     return render('catalog.html', {'books': books})         │   │ │
+│ └─────────────────────────────────────────────────────────────┘   │ │
+└───────────────────────────────────────────────────────────────────┘ │
+                                    │                                 │
+                                    ▼                                 │
+┌───────────────────────────────────────────────────────────────────┐ │
+│ USE CASES LAYER                                                   │ │
+│ ┌───────────────────────────────────────────────────────────────┐ │ │
+│ │ book_usecases.py                                              │ │ │
+│ │ class GetAllBooksUseCase:                                     │ │ │
+│ │     def execute(self):                                        │ │ │
+│ │         return self.book_repository.find_all() ◄──────────┐   │ │ │
+│ └───────────────────────────────────────────────────────────┘   │ │ │
+└─────────────────────────────────────────────────────────────────┘ │ │
+                                    │                               │ │
+                                    ▼ (gọi qua interface)           │ │
+┌─────────────────────────────────────────────────────────────────┐ │ │
+│ INFRASTRUCTURE LAYER                                            │ │ │
+│ ┌─────────────────────────────────────────────────────────────┐ │ │ │
+│ │ django_book_repository.py                                   │ │ │ │
+│ │ class DjangoBookRepository:                                 │ │ │ │
+│ │     def find_all(self):                                     │ │ │ │
+│ │         return BookModel.objects.all()  → MySQL Database    │ │ │ │
+│ └─────────────────────────────────────────────────────────────┘ │ │ │
+└─────────────────────────────────────────────────────────────────┘ │ │
+                                                                    │ │
+                 Dependency Injection ──────────────────────────────┘ │
+                 (Repository được inject vào UseCase)                 │
+```
+
+---
+
+## 💡 Điểm mấu chốt cần hiểu
+
+### 1. Dependency Rule (Quy tắc phụ thuộc)
+```
+Domain ← Use Cases ← Interfaces ← Infrastructure ← Framework
+         (Mũi tên chỉ hướng phụ thuộc - từ ngoài vào trong)
+```
+
+### 2. Tại sao cần Interface?
+```python
+# ❌ SAI - Use Case phụ thuộc trực tiếp vào Django
+class GetAllBooksUseCase:
+    def execute(self):
+        return BookModel.objects.all()  # Django ORM!
+
+# ✅ ĐÚNG - Use Case phụ thuộc vào Interface
+class GetAllBooksUseCase:
+    def __init__(self, repository: BookRepositoryInterface):
+        self.repository = repository
+    
+    def execute(self):
+        return self.repository.find_all()  # Không biết Django!
+```
+
+### 3. Lợi ích
+- **Muốn đổi từ MySQL sang MongoDB?** → Chỉ sửa Infrastructure layer
+- **Muốn test Use Cases?** → Tạo MockRepository, không cần database
+
+---
+
 ## Architecture Overview
 
 ```

@@ -1,1 +1,1 @@
-# Book Service - Microservices Architecture
+# Book Service Package
