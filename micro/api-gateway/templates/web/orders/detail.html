@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}Đơn hàng #{{ order.order_id }} - BookHaven{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start flex-wrap mb-4 pb-3 border-bottom">
+        <div>
+            <h1 class="text-primary mb-2">
+                <i class="bi bi-receipt me-2"></i>Đơn hàng #{{ order.order_id }}
+            </h1>
+            <p class="text-muted mb-0">
+                <i class="bi bi-calendar me-1"></i>Đặt ngày: {{ order.order_date|date:"d/m/Y H:i" }}
+            </p>
+        </div>
+        <span class="badge rounded-pill px-4 py-3 fs-6
+            {% if order.status_name == 'Pending' %}bg-warning text-dark
+            {% elif order.status_name == 'Processing' %}bg-info
+            {% elif order.status_name == 'Shipped' %}bg-primary
+            {% elif order.status_name == 'Delivered' %}bg-success
+            {% elif order.status_name == 'Cancelled' %}bg-danger
+            {% else %}bg-secondary{% endif %}">
+            {% if order.status_name == 'Pending' %}<i class="bi bi-clock me-1"></i>Chờ xử lý
+            {% elif order.status_name == 'Processing' %}<i class="bi bi-gear me-1"></i>Đang xử lý
+            {% elif order.status_name == 'Shipped' %}<i class="bi bi-truck me-1"></i>Đang giao
+            {% elif order.status_name == 'Delivered' %}<i class="bi bi-check-circle me-1"></i>Đã giao
+            {% elif order.status_name == 'Cancelled' %}<i class="bi bi-x-circle me-1"></i>Đã hủy
+            {% else %}{{ order.status_name }}{% endif %}
+        </span>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Order Items -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-box me-2"></i>Sản phẩm đã đặt</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Sản phẩm</th>
+                                    <th class="text-center">Đơn giá</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end pe-4">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light rounded p-2 me-3">
+                                                <i class="bi bi-book text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <a href="{% url 'web:book_detail' item.book_id %}" class="text-decoration-none fw-semibold text-dark">
+                                                    {{ item.book_title }}
+                                                </a>
+                                                {% if item.author_name %}
+                                                <br><small class="text-muted">{{ item.author_name }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center align-middle">{{ item.unit_price|floatformat:0 }}đ</td>
+                                    <td class="text-center align-middle">x{{ item.quantity }}</td>
+                                    <td class="text-end pe-4 align-middle fw-semibold text-success">{{ item.subtotal|floatformat:0 }}đ</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="row justify-content-end">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Tạm tính:</span>
+                                <span>{{ order.subtotal|floatformat:0 }}đ</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Phí vận chuyển:</span>
+                                <span>{{ order.shipping_fee|default:0|floatformat:0 }}đ</span>
+                            </div>
+                            {% if order.discount_amount %}
+                            <div class="d-flex justify-content-between py-2 text-danger">
+                                <span>Giảm giá:</span>
+                                <span>-{{ order.discount_amount|floatformat:0 }}đ</span>
+                            </div>
+                            {% endif %}
+                            <hr>
+                            <div class="d-flex justify-content-between py-2">
+                                <span class="h5 mb-0 fw-bold">Tổng cộng:</span>
+                                <span class="h5 mb-0 fw-bold text-primary">{{ order.total_price|floatformat:0 }}đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Timeline -->
+            {% if order.timeline %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-clock-history me-2"></i>Lịch sử đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in order.timeline %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">{{ event.status }}</h6>
+                                <small class="text-muted">{{ event.timestamp|date:"d/m/Y H:i" }}</small>
+                                {% if event.description %}
+                                <p class="mb-0 mt-1 text-muted small">{{ event.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Shipping Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-truck me-2"></i>Thông tin giao hàng</h5>
+                </div>
+                <div class="card-body">
+                    {% if order.shipping_address %}
+                    <p class="mb-2">
+                        <i class="bi bi-person text-muted me-2"></i>
+                        <strong>{{ order.recipient_name|default:"Chưa cập nhật" }}</strong>
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-telephone text-muted me-2"></i>
+                        {{ order.phone|default:"Chưa cập nhật" }}
+                    </p>
+                    <p class="mb-0">
+                        <i class="bi bi-geo-alt text-muted me-2"></i>
+                        {{ order.shipping_address }}
+                    </p>
+                    {% else %}
+                    <p class="text-muted mb-0">Chưa có thông tin giao hàng</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Payment Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-credit-card me-2"></i>Thanh toán</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Phương thức:</strong>
+                        <span class="ms-2">{{ order.payment_method|default:"COD" }}</span>
+                    </p>
+                    <p class="mb-0">
+                        <strong>Trạng thái:</strong>
+                        <span class="badge {% if order.payment_status == 'paid' %}bg-success{% else %}bg-warning text-dark{% endif %} ms-2">
+                            {% if order.payment_status == 'paid' %}Đã thanh toán{% else %}Chưa thanh toán{% endif %}
+                        </span>
+                    </p>
+                    {% if order.payment_status != 'paid' and order.status_name != 'Cancelled' %}
+                    <a href="{% url 'web:checkout' %}" class="btn btn-success w-100 mt-3">
+                        <i class="bi bi-wallet me-2"></i>Thanh toán ngay
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-gear me-2"></i>Thao tác</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'web:track_order' order.order_id %}" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-geo-alt me-2"></i>Theo dõi đơn hàng
+                    </a>
+                    {% if order.status_name == 'Pending' or order.status_name == 'Processing' %}
+                    <form method="post" action="{% url 'web:cancel_order' order.order_id %}" 
+                          onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="reason" value="Khách hàng yêu cầu hủy">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-x-circle me-2"></i>Hủy đơn hàng
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Support -->
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-headset display-4 text-primary mb-3"></i>
+                    <h5>Cần hỗ trợ?</h5>
+                    <p class="text-muted small mb-3">Liên hệ với chúng tôi nếu bạn có thắc mắc về đơn hàng</p>
+                    <a href="mailto:support@bookhaven.vn" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-envelope me-1"></i>Liên hệ hỗ trợ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back Link -->
+    <div class="mt-4 pt-3 border-top">
+        <a href="{% url 'web:order_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách đơn hàng
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e0e7ff;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -26px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-content {
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}

@@ -1,7 +1,13 @@
-# Byte-compiled / optimized / DLL files
+# ============================================================
+# Python / Django
+# ============================================================
+
+# Byte-compiled / optimized files
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
 
 # C extensions
 *.so
@@ -14,25 +20,37 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
 wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 
-# PyInstaller
-*.manifest
-*.spec
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# Django specific
+*.sqlite3
+*.db
+local_settings.py
+settings_local.py
+media/
 
-# Unit test / coverage reports
+# Logs
+*.log
+
+# Environment variables (keep .env.example)
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# ============================================================
+# Testing / Coverage
+# ============================================================
 htmlcov/
 .tox/
 .nox/
@@ -42,319 +60,36 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
 .hypothesis/
 .pytest_cache/
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-*.pot
-*.pyc
-*.pyo
-*.pyd
-*.sqlite3
-*.db
-*.env
-.env*
-local_settings.py
-settings_local.py
-
-# VS Code
+# ============================================================
+# IDE / Editor
+# ============================================================
 .vscode/
-
-# OS/Editor
-Thumbs.db
-.DS_Store
+.idea/
+*.iml
 *.swp
 *.swo
 
-# Jupyter
-*.ipynb
-.ipynb_checkpoints/
+# ============================================================
+# OS
+# ============================================================
+.DS_Store
+Thumbs.db
 
-# Temp/test/output
-c:/temp/
-*.html
-*.txt
-
-# Workspace/IDE
-.idea/
-*.iml
-
-# Chat/agent temp
-AppData/
-workspaceStorage/
-
-# Node/npm
+# ============================================================
+# Node.js
+# ============================================================
 node_modules/
 
-# Migration
-migrations/*/__pycache__/
-
-# Microservices
-micro/*/__pycache__/
-monolith/*/__pycache__/
-
-# SQL
-*.sql
-
-# Ignore seed_data output
-seed_data_output.txt
-
-# Ignore chat session resources
-GitHub.copilot-chat/
-
-# Ignore large tool results
-chat-session-resources/
-
-# Ignore test results
-c:/temp/test_results.txt
-
-# Ignore background terminal logs
-*.log
-
-# Ignore compiled files
-*.exe
-*.dll
-*.obj
-*.o
-*.a
-*.lib
-*.so
-*.dylib
-*.bin
-
-# Ignore backup files
-*.bak
-*.tmp
-*.old
-
-# Ignore package files
-*.tar
-*.tar.gz
-*.zip
-*.rar
-
-# Ignore coverage
-coverage/
-
-# Ignore pipenv/venv
-venv/
-Pipfile.lock
-
-# Ignore docker
-*.dockerfile
-Dockerfile
-
-# Ignore system files
-*.~
-
-# Ignore OneDrive sync
-*.one
-
-# Ignore markdown preview
-*.md.html
-
-# Ignore test cache
-pytest_cache/
-
-# Ignore notebook cache
+# ============================================================
+# Jupyter
+# ============================================================
 .ipynb_checkpoints/
 
-# Ignore all __pycache__
-**/__pycache__/
-
-# Ignore all .pyc
-**/*.pyc
-
-# Ignore all .pyo
-**/*.pyo
-
-# Ignore all .pyd
-**/*.pyd
-
-# Ignore all .db
-**/*.db
-
-# Ignore all .sqlite3
-**/*.sqlite3
-
-# Ignore all .env
-**/.env
-
-# Ignore all .log
-**/*.log
-
-# Ignore all .pot
-**/*.pot
-
-# Ignore all .exe
-**/*.exe
-
-# Ignore all .dll
-**/*.dll
-
-# Ignore all .obj
-**/*.obj
-
-# Ignore all .o
-**/*.o
-
-# Ignore all .a
-**/*.a
-
-# Ignore all .lib
-**/*.lib
-
-# Ignore all .so
-**/*.so
-
-# Ignore all .dylib
-**/*.dylib
-
-# Ignore all .bin
-**/*.bin
-
-# Ignore all .bak
-**/*.bak
-
-# Ignore all .tmp
-**/*.tmp
-
-# Ignore all .old
-**/*.old
-
-# Ignore all .tar
-**/*.tar
-
-# Ignore all .tar.gz
-**/*.tar.gz
-
-# Ignore all .zip
-**/*.zip
-
-# Ignore all .rar
-**/*.rar
-
-# Ignore all .one
-**/*.one
-
-# Ignore all .md.html
-**/*.md.html
-
-# Ignore all .swp
-**/*.swp
-
-# Ignore all .swo
-**/*.swo
-
-# Ignore all .iml
-**/*.iml
-
-# Ignore all .manifest
-**/*.manifest
-
-# Ignore all .spec
-**/*.spec
-
-# Ignore all .coverage
-**/.coverage
-
-# Ignore all .cover
-**/*.cover
-
-# Ignore all .py,cover
-**/*.py,cover
-
-# Ignore all .mo
-**/*.mo
-
-# Ignore all .egg
-**/*.egg
-
-# Ignore all .egg-info
-**/*.egg-info
-
-# Ignore all .installed.cfg
-**/.installed.cfg
-
-# Ignore all .tox
-**/.tox
-
-# Ignore all .nox
-**/.nox
-
-# Ignore all .hypothesis
-**/.hypothesis
-
-# Ignore all .pytest_cache
-**/.pytest_cache
-
-# Ignore all htmlcov
-**/htmlcov
-
-# Ignore all nosetests.xml
-**/nosetests.xml
-
-# Ignore all coverage.xml
-**/coverage.xml
-
-# Ignore all pip-log.txt
-**/pip-log.txt
-
-# Ignore all pip-delete-this-directory.txt
-**/pip-delete-this-directory.txt
-
-# Ignore all downloads
-**/downloads
-
-# Ignore all dist
-**/dist
-
-# Ignore all build
-**/build
-
-# Ignore all develop-eggs
-**/develop-eggs
-
-# Ignore all eggs
-**/eggs
-
-# Ignore all .eggs
-**/.eggs
-
-# Ignore all lib
-**/lib
-
-# Ignore all lib64
-**/lib64
-
-# Ignore all parts
-**/parts
-
-# Ignore all sdist
-**/sdist
-
-# Ignore all var
-**/var
-
-# Ignore all wheels
-**/wheels
-
-# Ignore all .Python
-**/.Python
-
-# Ignore all local_settings.py
-**/local_settings.py
-
-# Ignore all settings_local.py
-**/settings_local.py
-
-# Ignore all .env*
-**/.env*
+# ============================================================
+# Windows reserved filenames
+# ============================================================
 nul
 micro/nul

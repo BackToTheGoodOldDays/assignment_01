@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="rate-container">
+    <h1>Đánh giá sản phẩm</h1>
+    
+    <div class="book-info">
+        <div class="book-image">
+            {% if book.images.exists %}
+            <img src="{{ book.images.first.image_url }}" alt="{{ book.title }}">
+            {% else %}
+            <div class="no-image">📚</div>
+            {% endif %}
+        </div>
+        <div class="book-details">
+            <h2>{{ book.title }}</h2>
+            <p class="author">Tác giả: {{ book.author.name }}</p>
+            {% if book.publisher %}
+            <p class="publisher">NXB: {{ book.publisher.name }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <form method="post" class="rating-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label>Đánh giá của bạn</label>
+            <div class="star-rating">
+                {% for i in "54321" %}
+                <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}" {% if i == '5' %}checked{% endif %}>
+                <label for="star{{ i }}">★</label>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="review">Nhận xét (tùy chọn)</label>
+            <textarea name="review" id="review" rows="5" 
+                      placeholder="Chia sẻ trải nghiệm của bạn về sách này..."></textarea>
+        </div>
+        
+        <div class="form-actions">
+            <a href="{% url 'cart:detail' order_id=order_id %}" class="btn-cancel">Hủy</a>
+            <button type="submit" class="btn-submit">Gửi đánh giá</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.rate-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.rate-container h1 {
+    color: #2563eb;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.book-info {
+    display: flex;
+    gap: 20px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+.book-image {
+    width: 100px;
+    height: 140px;
+    flex-shrink: 0;
+}
+.book-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.no-image {
+    width: 100%;
+    height: 100%;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    border-radius: 8px;
+}
+.book-details h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+.book-details p {
+    color: #666;
+    margin: 4px 0;
+}
+.rating-form {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.form-group {
+    margin-bottom: 24px;
+}
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+/* Star Rating */
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+.star-rating input {
+    display: none;
+}
+.star-rating label {
+    font-size: 40px;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0 5px;
+}
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input:checked ~ label {
+    color: #ffc107;
+}
+.form-group textarea {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid #e0e7ff;
+    border-radius: 8px;
+    font-size: 1em;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+.form-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+}
+.btn-cancel, .btn-submit {
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+.btn-cancel {
+    background: #f0f0f0;
+    color: #666;
+}
+.btn-submit {
+    background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+}
+</style>
+{% endblock %}

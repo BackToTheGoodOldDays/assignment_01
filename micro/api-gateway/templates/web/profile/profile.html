@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+
+{% block title %}Thông tin tài khoản - BookHaven{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 col-md-4">
+                <div class="profile-sidebar">
+                    <div class="profile-avatar">
+                        <div class="avatar-circle">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <h4>{{ profile.name }}</h4>
+                        <p class="text-muted">{{ profile.email }}</p>
+                    </div>
+                    <nav class="profile-nav">
+                        <a href="{% url 'web:profile' %}" class="nav-link active">
+                            <i class="bi bi-person"></i> Thông tin tài khoản
+                        </a>
+                        <a href="{% url 'web:addresses' %}" class="nav-link">
+                            <i class="bi bi-geo-alt"></i> Sổ địa chỉ
+                        </a>
+                        <a href="{% url 'web:order_list' %}" class="nav-link">
+                            <i class="bi bi-bag"></i> Đơn hàng của tôi
+                        </a>
+                        <a href="{% url 'web:logout' %}" class="nav-link text-danger">
+                            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-lg-9 col-md-8">
+                <div class="profile-content">
+                    <div class="content-header">
+                        <h2><i class="bi bi-person-circle me-2"></i>Thông tin tài khoản</h2>
+                        <p>Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
+                    </div>
+                    
+                    {% if messages %}
+                    <div class="profile-messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="profile-form">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="id_name">
+                                <i class="bi bi-person"></i> Họ và tên
+                            </label>
+                            <input type="text" name="name" id="id_name" 
+                                   class="form-control" value="{{ profile.name }}" 
+                                   placeholder="Nhập họ và tên">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_email">
+                                <i class="bi bi-envelope"></i> Email
+                            </label>
+                            <input type="email" id="id_email" 
+                                   class="form-control" value="{{ profile.email }}" 
+                                   disabled>
+                            <small class="text-muted">Email không thể thay đổi</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_phone">
+                                <i class="bi bi-telephone"></i> Số điện thoại
+                            </label>
+                            <input type="tel" name="phone" id="id_phone" 
+                                   class="form-control" value="{{ profile.phone }}" 
+                                   placeholder="Nhập số điện thoại">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_username">
+                                <i class="bi bi-at"></i> Tên đăng nhập
+                            </label>
+                            <input type="text" id="id_username" 
+                                   class="form-control" value="{{ profile.username }}" 
+                                   disabled>
+                            <small class="text-muted">Tên đăng nhập không thể thay đổi</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-save">
+                                <i class="bi bi-check-lg me-2"></i>Lưu thay đổi
+                            </button>
+                            <a href="#" class="btn-change-password">
+                                <i class="bi bi-key me-2"></i>Đổi mật khẩu
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-page {
+        padding: 40px 0;
+        background: #f8fafc;
+        min-height: calc(100vh - 300px);
+    }
+    
+    .profile-sidebar {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    
+    .profile-avatar {
+        text-align: center;
+        padding-bottom: 25px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 25px;
+    }
+    
+    .avatar-circle {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--secondary-color, #2563eb), var(--primary-color, #1e40af));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+    }
+    
+    .avatar-circle i {
+        font-size: 3rem;
+        color: white;
+    }
+    
+    .profile-avatar h4 {
+        margin-bottom: 5px;
+        color: var(--text-dark, #1f2937);
+    }
+    
+    .profile-nav .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 15px;
+        color: var(--text-dark, #1f2937);
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s;
+        margin-bottom: 5px;
+    }
+    
+    .profile-nav .nav-link:hover {
+        background: #f1f5f9;
+    }
+    
+    .profile-nav .nav-link.active {
+        background: linear-gradient(135deg, var(--secondary-color, #2563eb), var(--primary-color, #1e40af));
+        color: white;
+    }
+    
+    .profile-nav .nav-link i {
+        font-size: 1.2rem;
+    }
+    
+    .profile-content {
+        background: white;
+        border-radius: 16px;
+        padding: 35px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    
+    .content-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .content-header h2 {
+        color: var(--primary-color, #1e40af);
+        margin-bottom: 8px;
+    }
+    
+    .content-header p {
+        color: var(--text-muted, #6b7280);
+        margin: 0;
+    }
+    
+    .profile-form .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .profile-form label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-dark, #1f2937);
+    }
+    
+    .profile-form label i {
+        color: var(--secondary-color, #2563eb);
+        margin-right: 5px;
+    }
+    
+    .profile-form .form-control {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .profile-form .form-control:focus {
+        border-color: var(--secondary-color, #2563eb);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+    
+    .profile-form .form-control:disabled {
+        background: #f1f5f9;
+        cursor: not-allowed;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .btn-save {
+        padding: 14px 30px;
+        background: linear-gradient(135deg, var(--secondary-color, #2563eb), var(--primary-color, #1e40af));
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+    }
+    
+    .btn-change-password {
+        padding: 14px 30px;
+        background: white;
+        color: var(--secondary-color, #2563eb);
+        border: 2px solid var(--secondary-color, #2563eb);
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+    }
+    
+    .btn-change-password:hover {
+        background: var(--secondary-color, #2563eb);
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .profile-sidebar {
+            margin-bottom: 25px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-save, .btn-change-password {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}

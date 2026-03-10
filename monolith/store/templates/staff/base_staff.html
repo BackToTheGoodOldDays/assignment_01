@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin - Bookstore{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-header h1 {
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-header h1 span {
+            font-size: 1.5em;
+        }
+        .user-info {
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-info .name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .user-info .role {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+        .sidebar-nav {
+            padding: 16px 0;
+        }
+        .nav-section {
+            padding: 8px 24px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-top: 16px;
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-link.active {
+            background: rgba(255,255,255,0.15);
+            border-left: 3px solid #60a5fa;
+        }
+        .nav-icon {
+            font-size: 1.2em;
+        }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 16px 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+        .logout-btn:hover {
+            opacity: 1;
+        }
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 24px;
+        }
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 16px 24px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+        }
+        .breadcrumb a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .top-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            .sidebar-header h1 span:last-child,
+            .user-info,
+            .nav-section,
+            .nav-link span:last-child,
+            .logout-btn span:last-child {
+                display: none;
+            }
+            .main-content {
+                margin-left: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><span>📚</span> <span>Bookstore Admin</span></h1>
+            </div>
+            
+            <div class="user-info">
+                <div class="name">{{ staff.name }}</div>
+                <div class="role">{{ staff.role|default:'Nhân viên' }}</div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">Tổng quan</div>
+                <a href="{% url 'staff:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="nav-section">Quản lý kho</div>
+                <a href="{% url 'staff:inventory_list' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}">
+                    <span class="nav-icon">📦</span>
+                    <span>Tồn kho</span>
+                </a>
+                <a href="{% url 'staff:add_book' %}" class="nav-link {% if request.resolver_match.url_name == 'add_book' %}active{% endif %}">
+                    <span class="nav-icon">➕</span>
+                    <span>Thêm sách</span>
+                </a>
+                <a href="{% url 'staff:inventory_list' %}" class="nav-link {% if 'import' in request.path %}active{% endif %}">
+                    <span class="nav-icon">📥</span>
+                    <span>Nhập kho</span>
+                </a>
+                <a href="{% url 'staff:inventory_logs' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory_logs' %}active{% endif %}">
+                    <span class="nav-icon">📋</span>
+                    <span>Lịch sử kho</span>
+                </a>
+                
+                <div class="nav-section">Đơn hàng</div>
+                <a href="{% url 'cart:orders' %}" class="nav-link {% if 'orders' in request.path %}active{% endif %}">
+                    <span class="nav-icon">🛒</span>
+                    <span>Đơn hàng</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="{% url 'staff:logout' %}" class="logout-btn">
+                    <span>🚪</span>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block staff_content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đơn hàng - Quản lý</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-header h1 {
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-info {
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-info .name { font-weight: 600; margin-bottom: 4px; }
+        .user-info .role { font-size: 0.85em; opacity: 0.8; }
+        .sidebar-nav { padding: 16px 0; }
+        .nav-section {
+            padding: 8px 24px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-top: 16px;
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .nav-link.active { background: rgba(255,255,255,0.15); border-left: 3px solid #60a5fa; }
+        .nav-icon { font-size: 1.2em; }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 16px 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+        .logout-btn:hover { opacity: 1; color: #fff; }
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 24px;
+        }
+        .orders-page h1 {
+            color: #1e3a8a;
+            margin-bottom: 24px;
+        }
+        .messages { margin-bottom: 20px; }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .alert-success { background: #d1fae5; color: #059669; }
+        .alert-error { background: #fee2e2; color: #dc2626; }
+        .filters-bar {
+            background: #fff;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #666;
+            background: #f3f4f6;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .filter-tab:hover { background: #e5e7eb; color: #333; }
+        .filter-tab.active { background: #2563eb; color: #fff; }
+        .table-container {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .orders-table th {
+            background: #f8fafc;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #1e3a8a;
+            border-bottom: 2px solid #e0e7ff;
+        }
+        .orders-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .order-number { font-weight: 600; color: #1e3a8a; }
+        .customer-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .customer-name { font-weight: 500; }
+        .customer-email { font-size: 0.85em; color: #666; }
+        .order-total { font-weight: 600; color: #22c55e; }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-processing { background: #dbeafe; color: #2563eb; }
+        .status-shipped { background: #e0e7ff; color: #4f46e5; }
+        .status-delivered { background: #d1fae5; color: #059669; }
+        .status-cancelled { background: #fee2e2; color: #dc2626; }
+        .btn-view {
+            padding: 6px 16px;
+            border-radius: 6px;
+            background: #f3f4f6;
+            color: #333;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .btn-view:hover { background: #e5e7eb; }
+        .empty-row {
+            text-align: center;
+            color: #888;
+            padding: 40px !important;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .page-link {
+            padding: 8px 14px;
+            border-radius: 6px;
+            background: #fff;
+            color: #333;
+            text-decoration: none;
+        }
+        .page-link.active { background: #2563eb; color: #fff; }
+        .order-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .stat-card .value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .sidebar-header h1 span:last-child,
+            .user-info,
+            .nav-section,
+            .nav-link span:last-child,
+            .logout-btn span:last-child { display: none; }
+            .main-content { margin-left: 60px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><span>📚</span> <span>Bookstore Admin</span></h1>
+            </div>
+            <div class="user-info">
+                <div class="name">{{ staff.name|default:'Nhân viên' }}</div>
+                <div class="role">{{ staff.role|default:'Nhân viên' }}</div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">Tổng quan</div>
+                <a href="{% url 'web:staff_dashboard' %}" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <div class="nav-section">Quản lý kho</div>
+                <a href="{% url 'web:staff_inventory' %}" class="nav-link">
+                    <span class="nav-icon">📦</span>
+                    <span>Tồn kho</span>
+                </a>
+                <a href="{% url 'web:staff_add_book' %}" class="nav-link">
+                    <span class="nav-icon">➕</span>
+                    <span>Thêm sách</span>
+                </a>
+                <a href="{% url 'web:staff_import_stock' %}" class="nav-link">
+                    <span class="nav-icon">📥</span>
+                    <span>Nhập kho</span>
+                </a>
+                <div class="nav-section">Đơn hàng</div>
+                <a href="{% url 'web:staff_orders' %}" class="nav-link active">
+                    <span class="nav-icon">🛒</span>
+                    <span>Đơn hàng</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{% url 'web:staff_logout' %}" class="logout-btn">
+                    <span>🚪</span>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="orders-page">
+                <h1>Quản lý đơn hàng</h1>
+                
+                {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Stats -->
+                <div class="order-stats">
+                    <div class="stat-card">
+                        <div class="value">{{ stats.total|default:orders|length }}</div>
+                        <div class="label">Tổng đơn hàng</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">{{ stats.pending|default:0 }}</div>
+                        <div class="label">Chờ xử lý</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">{{ stats.processing|default:0 }}</div>
+                        <div class="label">Đang xử lý</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">{{ stats.delivered|default:0 }}</div>
+                        <div class="label">Hoàn thành</div>
+                    </div>
+                </div>
+                
+                <!-- Filters -->
+                <div class="filters-bar">
+                    <div class="filter-tabs">
+                        <a href="{% url 'web:staff_orders' %}" class="filter-tab {% if not current_status %}active{% endif %}">Tất cả</a>
+                        <a href="{% url 'web:staff_orders' %}?status=pending" class="filter-tab {% if current_status == 'pending' %}active{% endif %}">Chờ xử lý</a>
+                        <a href="{% url 'web:staff_orders' %}?status=processing" class="filter-tab {% if current_status == 'processing' %}active{% endif %}">Đang xử lý</a>
+                        <a href="{% url 'web:staff_orders' %}?status=shipped" class="filter-tab {% if current_status == 'shipped' %}active{% endif %}">Đang giao</a>
+                        <a href="{% url 'web:staff_orders' %}?status=delivered" class="filter-tab {% if current_status == 'delivered' %}active{% endif %}">Hoàn thành</a>
+                        <a href="{% url 'web:staff_orders' %}?status=cancelled" class="filter-tab {% if current_status == 'cancelled' %}active{% endif %}">Đã hủy</a>
+                    </div>
+                </div>
+                
+                <!-- Orders Table -->
+                <div class="table-container">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Ngày đặt</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td class="order-number">#{{ order.order_id }}</td>
+                                <td>
+                                    <div class="customer-info">
+                                        <span class="customer-name">{{ order.customer_name }}</span>
+                                        <span class="customer-email">{{ order.customer_email }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ order.order_date }}</td>
+                                <td class="order-total">{{ order.total_price|floatformat:0 }}₫</td>
+                                <td>
+                                    <span class="status-badge status-{{ order.status_name|lower }}">
+                                        {% if order.status_name == 'Pending' %}Chờ xử lý
+                                        {% elif order.status_name == 'Processing' %}Đang xử lý
+                                        {% elif order.status_name == 'Shipped' %}Đang giao
+                                        {% elif order.status_name == 'Delivered' %}Hoàn thành
+                                        {% elif order.status_name == 'Cancelled' %}Đã hủy
+                                        {% elif order.status_name == 'Confirmed' %}Đã xác nhận
+                                        {% else %}{{ order.status_name }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'web:staff_order_detail' order.order_id %}" class="btn-view">Xem chi tiết</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="empty-row">Không có đơn hàng nào</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if pagination.total_pages > 1 %}
+                <div class="pagination">
+                    {% if pagination.has_prev %}
+                    <a href="?page={{ pagination.page|add:'-1' }}{% if current_status %}&status={{ current_status }}{% endif %}" class="page-link">&laquo;</a>
+                    {% endif %}
+                    <span class="page-link active">{{ pagination.page }}</span>
+                    {% if pagination.has_next %}
+                    <a href="?page={{ pagination.page|add:'1' }}{% if current_status %}&status={{ current_status }}{% endif %}" class="page-link">&raquo;</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

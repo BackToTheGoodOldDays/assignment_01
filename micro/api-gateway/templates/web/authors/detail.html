@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ author.name }} - BookHaven{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Author Header -->
+    <div class="author-header mb-5 p-4 rounded-4" style="background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            <div class="author-avatar-lg">
+                {% if author.photo_url %}
+                <img src="{{ author.photo_url }}" alt="{{ author.name }}" class="rounded-circle shadow">
+                {% else %}
+                <div class="avatar-placeholder-lg rounded-circle d-flex align-items-center justify-content-center bg-white shadow">
+                    <span class="fw-bold text-primary display-3">{{ author.name|slice:":1"|upper }}</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="author-info flex-grow-1">
+                <h1 class="mb-2" style="color: #1e3a8a;">{{ author.name }}</h1>
+                {% if author.nationality %}
+                <p class="mb-1 text-muted">
+                    <i class="bi bi-globe me-2"></i>{{ author.nationality }}
+                </p>
+                {% endif %}
+                {% if author.birth_date %}
+                <p class="mb-1 text-muted">
+                    <i class="bi bi-calendar me-2"></i>{{ author.birth_date|date:"d/m/Y" }}
+                </p>
+                {% endif %}
+                <span class="badge bg-primary fs-6 mt-2">{{ pagination.total|default:books|length }} sách</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Author Biography -->
+    {% if author.bio %}
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-header bg-white border-bottom py-3">
+            <h4 class="mb-0 text-primary"><i class="bi bi-person-lines-fill me-2"></i>Tiểu sử</h4>
+        </div>
+        <div class="card-body">
+            <p class="mb-0 text-muted" style="line-height: 1.8;">{{ author.bio }}</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Author's Books -->
+    <div class="mb-4">
+        <h3 class="mb-4" style="color: #1e3a8a;">
+            <i class="bi bi-book me-2"></i>Tác phẩm của {{ author.name }}
+        </h3>
+        
+        {% if books %}
+        <div class="row g-4">
+            {% for book in books %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="card book-card h-100 border-0 shadow-sm">
+                    <div class="position-relative">
+                        {% if book.image_url %}
+                        <a href="{% url 'web:book_detail' book.book_id %}">
+                            <img src="{{ book.image_url }}" class="card-img-top book-img" alt="{{ book.title }}">
+                        </a>
+                        {% else %}
+                        <a href="{% url 'web:book_detail' book.book_id %}" class="book-img-placeholder d-flex align-items-center justify-content-center bg-light">
+                            <i class="bi bi-book fs-1 text-muted"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if book.category_name %}
+                        <span class="badge bg-light text-primary mb-2">{{ book.category_name }}</span>
+                        {% endif %}
+                        <h5 class="card-title mb-2">
+                            <a href="{% url 'web:book_detail' book.book_id %}" class="text-decoration-none text-dark">
+                                {{ book.title|truncatewords:6 }}
+                            </a>
+                        </h5>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="text-warning me-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= book.rating|default:0 %}
+                                    <i class="bi bi-star-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">({{ book.review_count|default:0 }})</small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 text-primary mb-0">{{ book.price|floatformat:0 }}đ</span>
+                            <form method="post" action="{% url 'web:add_to_cart' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="book_id" value="{{ book.book_id }}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if pagination.total_pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagination.page|add:'-1' }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item disabled">
+                    <span class="page-link">Trang {{ pagination.page }} / {{ pagination.total_pages }}</span>
+                </li>
+                
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagination.page|add:'1' }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-book display-1 text-muted mb-3" style="opacity: 0.5;"></i>
+                <h4 class="text-muted">Chưa có sách nào của tác giả này</h4>
+                <p class="text-muted mb-0">Các tác phẩm sẽ được cập nhật sớm</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Back Link -->
+    <div class="mt-4 pt-3 border-top">
+        <a href="{% url 'web:author_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Tất cả tác giả
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .author-avatar-lg {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+    }
+    
+    .author-avatar-lg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .avatar-placeholder-lg {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .book-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .book-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12) !important;
+    }
+    
+    .book-img {
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .book-img-placeholder {
+        height: 200px;
+        text-decoration: none;
+    }
+    
+    @media (max-width: 768px) {
+        .author-header {
+            text-align: center;
+        }
+        
+        .author-header .d-flex {
+            justify-content: center;
+        }
+        
+        .author-avatar-lg {
+            margin-bottom: 20px;
+        }
+    }
+</style>
+{% endblock %}

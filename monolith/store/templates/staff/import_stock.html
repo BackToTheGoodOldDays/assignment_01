@@ -1,0 +1,312 @@
+{% extends 'staff/base_staff.html' %}
+{% block staff_content %}
+<div class="import-page">
+    <h1>Nhập kho</h1>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="import-tabs">
+        <button class="tab-btn active" onclick="showTab('single')">Nhập đơn lẻ</button>
+        <button class="tab-btn" onclick="showTab('bulk')">Nhập hàng loạt</button>
+    </div>
+    
+    <!-- Single Import -->
+    <div id="single-tab" class="tab-content active">
+        <form method="post" action="{% url 'staff:import_stock' %}" class="import-form">
+            {% csrf_token %}
+            <input type="hidden" name="import_type" value="single">
+            
+            <div class="form-group">
+                <label for="book">Chọn sách *</label>
+                <select name="book" id="book" required class="book-select">
+                    <option value="">Tìm kiếm sách...</option>
+                    {% for book in books %}
+                    <option value="{{ book.book_id }}" data-stock="{{ book.stock_quantity }}">
+                        {{ book.title }} - {{ book.isbn }} (Tồn: {{ book.stock_quantity }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="quantity">Số lượng nhập *</label>
+                    <input type="number" name="quantity" id="quantity" min="1" required
+                           value="10" placeholder="10">
+                </div>
+                
+                <div class="form-group">
+                    <label for="cost">Giá nhập (VNĐ)</label>
+                    <input type="number" name="cost" id="cost" min="0"
+                           placeholder="Giá nhập từ NCC">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="supplier">Nhà cung cấp</label>
+                <input type="text" name="supplier" id="supplier"
+                       placeholder="Tên nhà cung cấp">
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">Ghi chú</label>
+                <textarea name="notes" id="notes" rows="3"
+                          placeholder="Ghi chú thêm về đợt nhập hàng..."></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Nhập kho</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Bulk Import -->
+    <div id="bulk-tab" class="tab-content">
+        <form method="post" action="{% url 'staff:bulk_import' %}" class="import-form">
+            {% csrf_token %}
+            
+            <div class="bulk-info">
+                <p>Nhập nhiều sách cùng lúc. Mỗi dòng gồm: <code>ISBN, Số lượng, Giá nhập (tùy chọn)</code></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="bulk_data">Dữ liệu nhập hàng loạt *</label>
+                <textarea name="bulk_data" id="bulk_data" rows="10" required
+                          placeholder="978-xxx-xxxx-xxx-1, 20, 80000
+978-xxx-xxxx-xxx-2, 15
+978-xxx-xxxx-xxx-3, 30, 50000"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="bulk_supplier">Nhà cung cấp</label>
+                <input type="text" name="bulk_supplier" id="bulk_supplier"
+                       placeholder="Tên nhà cung cấp">
+            </div>
+            
+            <div class="form-group">
+                <label for="bulk_notes">Ghi chú chung</label>
+                <textarea name="bulk_notes" id="bulk_notes" rows="2"
+                          placeholder="Ghi chú cho đợt nhập hàng này..."></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Nhập hàng loạt</button>
+            </div>
+        </form>
+        
+        <div class="import-template">
+            <h3>Hướng dẫn</h3>
+            <p>Định dạng mỗi dòng: <code>ISBN, Số lượng, Giá nhập (tùy chọn)</code></p>
+            <p>Ví dụ:</p>
+            <pre>978-604-1-12345-1, 20, 80000
+978-604-1-12345-2, 15
+978-604-1-12345-3, 30, 50000</pre>
+        </div>
+    </div>
+    
+    <!-- Recent Imports -->
+    <div class="recent-imports">
+        <h2>Lịch sử nhập gần đây</h2>
+        <table class="imports-table">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Sách</th>
+                    <th>Số lượng</th>
+                    <th>Nhân viên</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_logs %}
+                <tr>
+                    <td>{{ log.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>{{ log.book.title }}</td>
+                    <td class="qty-cell">+{{ log.quantity_change }}</td>
+                    <td>{{ log.staff.name }}</td>
+                    <td>{{ log.notes|default:'-' }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-row">Chưa có lịch sử nhập kho</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.import-page h1 {
+    color: #1e3a8a;
+    margin-bottom: 24px;
+}
+.messages {
+    margin-bottom: 20px;
+}
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.alert-success { background: #d1fae5; color: #059669; }
+.alert-error { background: #fee2e2; color: #dc2626; }
+.import-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.tab-btn {
+    padding: 12px 24px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-weight: 500;
+    color: #666;
+}
+.tab-btn.active {
+    background: #fff;
+    color: #1e3a8a;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+.import-form {
+    background: #fff;
+    padding: 24px;
+    border-radius: 0 12px 12px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1em;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+.form-group textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+.btn {
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%);
+    color: #fff;
+}
+.bulk-info {
+    background: #eff6ff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+.bulk-info code {
+    background: #dbeafe;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.import-template {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+.import-template h3 {
+    color: #1e3a8a;
+    margin-bottom: 12px;
+}
+.import-template pre {
+    background: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+.recent-imports {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.recent-imports h2 {
+    color: #1e3a8a;
+    margin-bottom: 20px;
+}
+.imports-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.imports-table th {
+    background: #f8fafc;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #1e3a8a;
+}
+.imports-table td {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.qty-cell {
+    color: #22c55e;
+    font-weight: 600;
+}
+.empty-row {
+    text-align: center;
+    color: #888;
+}
+</style>
+
+<script>
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById(tabName + '-tab').classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
+{% endblock %}

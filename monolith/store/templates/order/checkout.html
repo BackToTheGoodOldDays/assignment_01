@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="checkout-container">
+    <h1 style="text-align:center;margin-bottom:32px;font-size:2.1em;font-weight:700;color:#2563eb;">Thanh toán</h1>
+    
+    <div class="checkout-grid">
+        <!-- Order Summary -->
+        <div class="checkout-section">
+            <h2 class="section-title">Đơn hàng của bạn</h2>
+            <div class="order-items">
+                {% for item in cart.items.all %}
+                <div class="order-item">
+                    <span class="item-name">{{ item.book.title }}</span>
+                    <span class="item-qty">x{{ item.quantity }}</span>
+                    <span class="item-price">{{ item.subtotal|floatformat:0 }}₫</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="order-totals">
+                <div class="total-row">
+                    <span>Tạm tính:</span>
+                    <span>{{ subtotal|floatformat:0 }}₫</span>
+                </div>
+                <div class="total-row">
+                    <span>Thuế (10%):</span>
+                    <span>{{ tax|floatformat:0 }}₫</span>
+                </div>
+                <div class="total-row shipping-fee" id="shipping-fee-row">
+                    <span>Phí vận chuyển:</span>
+                    <span id="shipping-fee">0₫</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>Tổng cộng:</span>
+                    <span id="grand-total">{{ subtotal|floatformat:0 }}₫</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Checkout Form -->
+        <form method="post" action="{% url 'cart:create' %}" class="checkout-form">
+            {% csrf_token %}
+            
+            <!-- Shipping Method -->
+            <div class="checkout-section">
+                <h2 class="section-title">Phương thức vận chuyển</h2>
+                <div class="method-options">
+                    {% for method in shipping_methods %}
+                    <label class="method-option">
+                        <input type="radio" name="shipping_method" value="{{ method.method_id }}" 
+                               data-fee="{{ method.base_fee }}"
+                               {% if forloop.first %}checked{% endif %}>
+                        <div class="method-info">
+                            <span class="method-name">{{ method.name }}</span>
+                            <span class="method-desc">{{ method.description }}</span>
+                            <span class="method-price">{{ method.base_fee|floatformat:0 }}₫</span>
+                            <span class="method-time">{{ method.estimated_days_min }}-{{ method.estimated_days_max }} ngày</span>
+                        </div>
+                    </label>
+                    {% empty %}
+                    <p>Không có phương thức vận chuyển khả dụng.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Payment Method -->
+            <div class="checkout-section">
+                <h2 class="section-title">Phương thức thanh toán</h2>
+                <div class="method-options">
+                    {% for method in payment_methods %}
+                    <label class="method-option">
+                        <input type="radio" name="payment_method" value="{{ method.method_id }}"
+                               {% if forloop.first %}checked{% endif %}>
+                        <div class="method-info">
+                            <span class="method-name">{{ method.name }}</span>
+                            <span class="method-desc">{{ method.description }}</span>
+                            {% if method.processing_fee > 0 %}
+                            <span class="method-fee">Phí: {{ method.processing_fee|floatformat:0 }}₫</span>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% empty %}
+                    <p>Không có phương thức thanh toán khả dụng.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Delivery Address -->
+            <div class="checkout-section">
+                <h2 class="section-title">Địa chỉ giao hàng</h2>
+                
+                {% if addresses %}
+                <div class="saved-addresses">
+                    {% for addr in addresses %}
+                    <label class="address-option">
+                        <input type="radio" name="address_id" value="{{ addr.address_id }}"
+                               {% if addr.is_default %}checked{% endif %}>
+                        <div class="address-info">
+                            <span class="recipient">{{ addr.recipient_name }} - {{ addr.phone }}</span>
+                            <span class="address">{{ addr.detail }}</span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                    <label class="address-option">
+                        <input type="radio" name="address_id" value="" id="new-address-radio">
+                        <span>Thêm địa chỉ mới</span>
+                    </label>
+                </div>
+                {% endif %}
+                
+                <div class="new-address-form" id="new-address-form" {% if addresses %}style="display:none;"{% endif %}>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tên người nhận *</label>
+                            <input type="text" name="recipient_name" value="{{ request.user.name }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Số điện thoại *</label>
+                            <input type="text" name="phone" value="{{ request.user.phone }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Địa chỉ *</label>
+                        <input type="text" name="address_line1" placeholder="Số nhà, tên đường">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Phường/Xã</label>
+                            <input type="text" name="ward">
+                        </div>
+                        <div class="form-group">
+                            <label>Quận/Huyện</label>
+                            <input type="text" name="district">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tỉnh/Thành phố *</label>
+                            <input type="text" name="city">
+                        </div>
+                        <div class="form-group">
+                            <label>Mã bưu điện</label>
+                            <input type="text" name="postal_code">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="checkout-actions">
+                <a href="{% url 'cart:view' %}" class="btn-secondary">Quay lại giỏ hàng</a>
+                <button type="submit" class="btn-primary">Đặt hàng</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.checkout-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 30px;
+}
+.checkout-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.section-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e0e7ff;
+}
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.order-totals {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid #e0e7ff;
+}
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+.grand-total {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #2563eb;
+    border-top: 1px solid #ddd;
+    padding-top: 12px;
+    margin-top: 8px;
+}
+.method-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.method-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #e0e7ff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.method-option:hover {
+    border-color: #2563eb;
+    background: #f8fafc;
+}
+.method-option input:checked + .method-info {
+    color: #2563eb;
+}
+.method-option input[type="radio"] {
+    margin-top: 4px;
+}
+.method-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.method-name {
+    font-weight: 600;
+}
+.method-desc {
+    font-size: 0.9em;
+    color: #666;
+}
+.method-price {
+    color: #22c55e;
+    font-weight: 500;
+}
+.address-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e0e7ff;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+.form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 8px;
+    font-size: 1em;
+}
+.checkout-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 1em;
+    text-decoration: none;
+}
+@media (max-width: 768px) {
+    .checkout-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const subtotal = {{ subtotal }};
+    const tax = {{ tax }};
+    const shippingInputs = document.querySelectorAll('input[name="shipping_method"]');
+    const shippingFeeSpan = document.getElementById('shipping-fee');
+    const grandTotalSpan = document.getElementById('grand-total');
+    const newAddressRadio = document.getElementById('new-address-radio');
+    const newAddressForm = document.getElementById('new-address-form');
+    
+    function updateTotal() {
+        const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
+        const shippingFee = selectedShipping ? parseFloat(selectedShipping.dataset.fee) : 0;
+        const grandTotal = subtotal + tax + shippingFee;
+        
+        shippingFeeSpan.textContent = shippingFee.toLocaleString('vi-VN') + '₫';
+        grandTotalSpan.textContent = grandTotal.toLocaleString('vi-VN') + '₫';
+    }
+    
+    shippingInputs.forEach(input => {
+        input.addEventListener('change', updateTotal);
+    });
+    
+    if (newAddressRadio) {
+        const addressRadios = document.querySelectorAll('input[name="address_id"]');
+        addressRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === '') {
+                    newAddressForm.style.display = 'block';
+                } else {
+                    newAddressForm.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    updateTotal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Đơn hàng của tôi - BookHaven{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="text-center mb-4" style="color: #2563eb; font-weight: 700;">
+        <i class="bi bi-bag-check me-2"></i>Đơn hàng của tôi
+    </h1>
+    
+    <!-- Filter -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Trạng thái</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Chờ xử lý</option>
+                        <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>Đang xử lý</option>
+                        <option value="shipped" {% if request.GET.status == 'shipped' %}selected{% endif %}>Đang giao</option>
+                        <option value="delivered" {% if request.GET.status == 'delivered' %}selected{% endif %}>Đã giao</option>
+                        <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Tìm kiếm</label>
+                    <input type="text" name="q" class="form-control" placeholder="Mã đơn hàng..." value="{{ request.GET.q }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-2"></i>Tìm kiếm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if orders %}
+    <div class="orders-list">
+        {% for order in orders %}
+        <div class="card border-0 shadow-sm mb-3 order-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
+                    <div>
+                        <h5 class="mb-1 text-primary fw-bold">
+                            <i class="bi bi-receipt me-2"></i>Đơn hàng #{{ order.order_id }}
+                        </h5>
+                        <small class="text-muted">
+                            <i class="bi bi-calendar me-1"></i>{{ order.order_date|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                    <span class="badge rounded-pill 
+                        {% if order.status_name == 'Pending' %}bg-warning text-dark
+                        {% elif order.status_name == 'Processing' %}bg-info
+                        {% elif order.status_name == 'Shipped' %}bg-primary
+                        {% elif order.status_name == 'Delivered' %}bg-success
+                        {% elif order.status_name == 'Cancelled' %}bg-danger
+                        {% else %}bg-secondary{% endif %} px-3 py-2">
+                        {% if order.status_name == 'Pending' %}Chờ xử lý
+                        {% elif order.status_name == 'Processing' %}Đang xử lý
+                        {% elif order.status_name == 'Shipped' %}Đang giao
+                        {% elif order.status_name == 'Delivered' %}Đã giao
+                        {% elif order.status_name == 'Cancelled' %}Đã hủy
+                        {% else %}{{ order.status_name }}{% endif %}
+                    </span>
+                </div>
+                
+                <div class="order-items mb-3">
+                    {% for item in order.items|slice:":3" %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-book text-primary me-2"></i>
+                            <span>{{ item.book_title }}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-muted me-3">x{{ item.quantity }}</span>
+                            <span class="text-success fw-semibold">{{ item.subtotal|floatformat:0 }}đ</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if order.items|length > 3 %}
+                    <div class="text-muted small mt-2">
+                        <i class="bi bi-three-dots me-1"></i>và {{ order.items|length|add:"-3" }} sản phẩm khác...
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <div>
+                        <span class="text-muted">Tổng cộng:</span>
+                        <span class="h5 text-primary fw-bold ms-2">{{ order.total_price|floatformat:0 }}đ</span>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{% url 'web:order_detail' order.order_id %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>Chi tiết
+                        </a>
+                        <a href="{% url 'web:track_order' order.order_id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-geo-alt me-1"></i>Theo dõi
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if pagination.total_pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ pagination.page|add:'-1' }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i> Trước
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item disabled">
+                <span class="page-link">Trang {{ pagination.page }} / {{ pagination.total_pages }}</span>
+            </li>
+            
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ pagination.page|add:'1' }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    Tiếp <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <div class="empty-state">
+                <i class="bi bi-bag-x display-1 text-muted mb-3"></i>
+                <h3 class="text-muted">Chưa có đơn hàng nào</h3>
+                <p class="text-muted mb-4">Bạn chưa đặt đơn hàng nào. Hãy khám phá các sách hay!</p>
+                <a href="{% url 'web:book_list' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-book me-2"></i>Mua sắm ngay
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    .empty-state i {
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Tác giả - BookHaven{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="text-center mb-2" style="color: #2563eb; font-weight: 700;">
+        <i class="bi bi-people me-2"></i>Tác giả
+    </h1>
+    <p class="text-center text-muted mb-5">Khám phá các tác giả và tác phẩm của họ</p>
+    
+    <!-- Search Bar -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" class="form-control form-control-lg rounded-pill" 
+                       placeholder="Tìm kiếm tác giả..." value="{{ request.GET.q }}">
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    {% if authors %}
+    <div class="row g-4">
+        {% for author in authors %}
+        <div class="col-lg-3 col-md-4 col-sm-6">
+            <a href="{% url 'web:author_detail' author.id %}" class="text-decoration-none">
+                <div class="card author-card h-100 border-0 shadow-sm text-center">
+                    <div class="card-body p-4">
+                        <div class="author-avatar mx-auto mb-3">
+                            {% if author.photo_url %}
+                            <img src="{{ author.photo_url }}" alt="{{ author.name }}" class="rounded-circle">
+                            {% else %}
+                            <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center">
+                                <span class="fw-bold text-primary fs-2">{{ author.name|slice:":1"|upper }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <h5 class="mb-2 text-dark">{{ author.name }}</h5>
+                        <span class="badge bg-primary rounded-pill mb-2">{{ author.book_count|default:0 }} sách</span>
+                        {% if author.nationality %}
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-globe me-1"></i>{{ author.nationality }}
+                        </p>
+                        {% endif %}
+                        {% if author.bio %}
+                        <p class="text-muted small mt-2 mb-0">{{ author.bio|truncatewords:15 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if pagination.total_pages > 1 %}
+    <nav class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ pagination.page|add:'-1' }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item disabled">
+                <span class="page-link">Trang {{ pagination.page }} / {{ pagination.total_pages }}</span>
+            </li>
+            
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ pagination.page|add:'1' }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-people display-1 text-muted mb-3" style="opacity: 0.5;"></i>
+            <h3 class="text-muted">Không tìm thấy tác giả nào</h3>
+            <p class="text-muted mb-4">Hãy thử tìm kiếm với từ khóa khác</p>
+            <a href="{% url 'web:book_list' %}" class="btn btn-primary">
+                <i class="bi bi-book me-2"></i>Xem tất cả sách
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .author-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 16px;
+    }
+    
+    .author-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12) !important;
+    }
+    
+    .author-avatar {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .author-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
+    }
+</style>
+{% endblock %}

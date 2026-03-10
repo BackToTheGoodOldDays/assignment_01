@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="orders-container">
+    <h1 style="text-align:center;margin-bottom:32px;font-size:2.1em;font-weight:700;color:#2563eb;">Đơn hàng của tôi</h1>
+    
+    <!-- Filter -->
+    <div class="orders-filter">
+        <form method="get" class="filter-form">
+            <select name="status" onchange="this.form.submit()">
+                <option value="">Tất cả trạng thái</option>
+                {% for status in statuses %}
+                <option value="{{ status.name }}" {% if selected_status == status.name %}selected{% endif %}>
+                    {{ status.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    
+    {% if orders %}
+    <div class="orders-list">
+        {% for order in orders %}
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-info">
+                    <span class="order-number">Đơn hàng #{{ order.order_number }}</span>
+                    <span class="order-date">{{ order.order_date|date:"d/m/Y H:i" }}</span>
+                </div>
+                <span class="order-status status-{{ order.status.name|lower|default:'pending' }}">
+                    {{ order.status.name|default:'Pending' }}
+                </span>
+            </div>
+            <div class="order-items">
+                {% for item in order.items.all|slice:":3" %}
+                <div class="order-item">
+                    <span class="item-title">{{ item.book.title }}</span>
+                    <span class="item-qty">x{{ item.quantity }}</span>
+                    <span class="item-price">{{ item.subtotal|floatformat:0 }}₫</span>
+                </div>
+                {% endfor %}
+                {% if order.items.count > 3 %}
+                <div class="more-items">và {{ order.items.count|add:"-3" }} sản phẩm khác...</div>
+                {% endif %}
+            </div>
+            <div class="order-footer">
+                <span class="order-total">Tổng: <strong>{{ order.total_price|floatformat:0 }}₫</strong></span>
+                <a href="{% url 'cart:detail' order_id=order.order_id %}" class="btn-view">Xem chi tiết</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if orders.has_other_pages %}
+    <div class="pagination">
+        {% if orders.has_previous %}
+        <a href="?page={{ orders.previous_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}">&laquo; Trước</a>
+        {% endif %}
+        <span class="current-page">Trang {{ orders.number }} / {{ orders.paginator.num_pages }}</span>
+        {% if orders.has_next %}
+        <a href="?page={{ orders.next_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}">Tiếp &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="no-orders">
+        <p>Bạn chưa có đơn hàng nào.</p>
+        <a href="{% url 'books:catalog' %}" class="btn-shop">Mua sắm ngay</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.orders-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.orders-filter {
+    margin-bottom: 24px;
+}
+.filter-form select {
+    padding: 10px 16px;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 8px;
+    font-size: 1em;
+    background: #fff;
+}
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.order-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.order-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.order-number {
+    font-weight: 700;
+    color: #2563eb;
+}
+.order-date {
+    font-size: 0.9em;
+    color: #666;
+}
+.order-status {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+.status-pending { background: #fef3c7; color: #d97706; }
+.status-processing { background: #dbeafe; color: #2563eb; }
+.status-shipped { background: #e0e7ff; color: #4f46e5; }
+.status-delivered { background: #d1fae5; color: #059669; }
+.status-cancelled { background: #fee2e2; color: #dc2626; }
+.order-items {
+    margin-bottom: 16px;
+}
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8f8f8;
+}
+.item-title {
+    flex: 1;
+}
+.item-qty {
+    color: #666;
+    margin: 0 16px;
+}
+.item-price {
+    color: #22c55e;
+    font-weight: 500;
+}
+.more-items {
+    color: #888;
+    font-size: 0.9em;
+    padding-top: 8px;
+}
+.order-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+.order-total {
+    font-size: 1.1em;
+}
+.btn-view {
+    background: #2563eb;
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+}
+.btn-view:hover {
+    background: #1d4ed8;
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+.pagination a {
+    color: #2563eb;
+    text-decoration: none;
+}
+.no-orders {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+.btn-shop {
+    display: inline-block;
+    margin-top: 16px;
+    background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

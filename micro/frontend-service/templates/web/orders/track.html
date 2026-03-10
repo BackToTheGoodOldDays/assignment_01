@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}Theo dõi đơn hàng #{{ order.id }} - BookHaven{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="text-primary mb-3">
+                    <i class="bi bi-geo-alt me-2"></i>Theo dõi đơn hàng
+                </h1>
+                <p class="text-muted mb-0">Đơn hàng #{{ order.id }}</p>
+            </div>
+            
+            <!-- Current Status -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center py-4">
+                    <div class="status-icon mb-3">
+                        {% if order.status == 'pending' %}
+                        <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="bi bi-clock text-warning display-5"></i>
+                        </div>
+                        {% elif order.status == 'processing' %}
+                        <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="bi bi-gear text-info display-5"></i>
+                        </div>
+                        {% elif order.status == 'shipped' %}
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="bi bi-truck text-primary display-5"></i>
+                        </div>
+                        {% elif order.status == 'delivered' %}
+                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="bi bi-check-circle text-success display-5"></i>
+                        </div>
+                        {% elif order.status == 'cancelled' %}
+                        <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="bi bi-x-circle text-danger display-5"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <h3 class="mb-2">
+                        {% if order.status == 'pending' %}Đang chờ xử lý
+                        {% elif order.status == 'processing' %}Đang xử lý
+                        {% elif order.status == 'shipped' %}Đang vận chuyển
+                        {% elif order.status == 'delivered' %}Đã giao hàng
+                        {% elif order.status == 'cancelled' %}Đã hủy
+                        {% else %}{{ order.status }}{% endif %}
+                    </h3>
+                    <p class="text-muted mb-0">
+                        {% if order.status == 'pending' %}Đơn hàng của bạn đang chờ được xác nhận
+                        {% elif order.status == 'processing' %}Đơn hàng đang được chuẩn bị
+                        {% elif order.status == 'shipped' %}Đơn hàng đang trên đường đến bạn
+                        {% elif order.status == 'delivered' %}Đơn hàng đã được giao thành công
+                        {% elif order.status == 'cancelled' %}Đơn hàng đã bị hủy
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Tracking Info -->
+            {% if tracking.tracking_number %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-box-seam me-2"></i>Thông tin vận chuyển</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <p class="mb-2">
+                                <strong>Mã vận đơn:</strong>
+                                <span class="ms-2 badge bg-primary">{{ tracking.tracking_number }}</span>
+                            </p>
+                            {% if tracking.carrier %}
+                            <p class="mb-0">
+                                <strong>Đơn vị vận chuyển:</strong>
+                                <span class="ms-2">{{ tracking.carrier }}</span>
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% if tracking.estimated_delivery %}
+                        <div class="col-md-6 text-md-end">
+                            <div class="bg-light rounded p-3">
+                                <small class="text-muted d-block">Dự kiến giao hàng</small>
+                                <strong class="text-primary fs-5">{{ tracking.estimated_delivery|date:"d/m/Y" }}</strong>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Progress Steps -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-list-check me-2"></i>Tiến trình đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress-steps">
+                        <div class="step {% if order.status != 'cancelled' %}completed{% endif %}">
+                            <div class="step-icon">
+                                <i class="bi bi-cart-check"></i>
+                            </div>
+                            <div class="step-content">
+                                <h6 class="mb-1">Đã đặt hàng</h6>
+                                <small class="text-muted">Đơn hàng đã được tạo</small>
+                            </div>
+                        </div>
+                        <div class="step {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %}">
+                            <div class="step-icon">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            <div class="step-content">
+                                <h6 class="mb-1">Đang xử lý</h6>
+                                <small class="text-muted">Chuẩn bị hàng</small>
+                            </div>
+                        </div>
+                        <div class="step {% if order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %}">
+                            <div class="step-icon">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <div class="step-content">
+                                <h6 class="mb-1">Đang giao</h6>
+                                <small class="text-muted">Đang vận chuyển</small>
+                            </div>
+                        </div>
+                        <div class="step {% if order.status == 'delivered' %}completed{% endif %}">
+                            <div class="step-icon">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="step-content">
+                                <h6 class="mb-1">Hoàn thành</h6>
+                                <small class="text-muted">Giao hàng thành công</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tracking History -->
+            {% if tracking.history %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-clock-history me-2"></i>Lịch sử vận chuyển</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in tracking.history %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="mb-1">{{ event.status }}</h6>
+                                    <small class="text-muted">{{ event.date|date:"d/m/Y H:i" }}</small>
+                                </div>
+                                {% if event.description %}
+                                <p class="mb-0 text-muted small">{{ event.description }}</p>
+                                {% endif %}
+                                {% if event.location %}
+                                <small class="text-primary"><i class="bi bi-geo-alt me-1"></i>{{ event.location }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Back Link -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'web:order_detail' order.id %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Chi tiết đơn hàng
+                </a>
+                <a href="{% url 'web:order_list' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-list me-2"></i>Danh sách đơn hàng
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+    }
+    
+    .progress-steps::before {
+        content: '';
+        position: absolute;
+        top: 25px;
+        left: 50px;
+        right: 50px;
+        height: 3px;
+        background: #e5e7eb;
+        z-index: 0;
+    }
+    
+    .step {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        flex: 1;
+    }
+    
+    .step-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        color: #9ca3af;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        transition: all 0.3s;
+    }
+    
+    .step.completed .step-icon {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        color: white;
+    }
+    
+    .step.completed .step-content h6 {
+        color: #2563eb;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e0e7ff;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -26px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-content {
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 8px;
+    }
+    
+    @media (max-width: 768px) {
+        .progress-steps {
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .progress-steps::before {
+            display: none;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            text-align: left;
+            gap: 15px;
+        }
+        
+        .step-icon {
+            margin-bottom: 0;
+        }
+    }
+</style>
+{% endblock %}

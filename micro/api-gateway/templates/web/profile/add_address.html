@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Thêm địa chỉ - Bookstore{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Thêm địa chỉ mới</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="recipient_name" class="form-label">Tên người nhận</label>
+                <input type="text" class="form-control" name="recipient_name" id="recipient_name" required>
+            </div>
+            <div class="col-md-6">
+                <label for="phone" class="form-label">Số điện thoại</label>
+                <input type="tel" class="form-control" name="phone" id="phone">
+            </div>
+            <div class="col-12">
+                <label for="address_line1" class="form-label">Địa chỉ</label>
+                <input type="text" class="form-control" name="address_line1" id="address_line1" required>
+            </div>
+            <div class="col-12">
+                <label for="address_line2" class="form-label">Địa chỉ 2 (tùy chọn)</label>
+                <input type="text" class="form-control" name="address_line2" id="address_line2">
+            </div>
+            <div class="col-md-4">
+                <label for="ward" class="form-label">Phường/Xã</label>
+                <input type="text" class="form-control" name="ward" id="ward">
+            </div>
+            <div class="col-md-4">
+                <label for="district" class="form-label">Quận/Huyện</label>
+                <input type="text" class="form-control" name="district" id="district">
+            </div>
+            <div class="col-md-4">
+                <label for="city" class="form-label">Tỉnh/Thành phố</label>
+                <input type="text" class="form-control" name="city" id="city" required>
+            </div>
+            <div class="col-md-6">
+                <label for="postal_code" class="form-label">Mã bưu điện</label>
+                <input type="text" class="form-control" name="postal_code" id="postal_code">
+            </div>
+            <div class="col-md-6">
+                <label for="country" class="form-label">Quốc gia</label>
+                <input type="text" class="form-control" name="country" id="country" value="Vietnam">
+            </div>
+            <div class="col-12">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" name="is_default" id="is_default">
+                    <label class="form-check-label" for="is_default">Đặt làm địa chỉ mặc định</label>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Thêm địa chỉ</button>
+            <a href="{% url 'web:addresses' %}" class="btn btn-outline-secondary ms-2">Quay lại</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

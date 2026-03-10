@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 style="text-align:center;margin-bottom:32px;font-size:2.1em;font-weight:700;color:#2563eb;letter-spacing:1px;">Danh sách Sách</h1>
+{% if books %}
+<div class="book-grid">
+        {% for book in books %}
+        <div class="book-card">
+                <a href="{% url 'books:detail' book.id %}">
+                        <div class="book-thumb">
+                                <img src="https://covers.openlibrary.org/b/isbn/{{ book.isbn|default:'9780140449136' }}-M.jpg" alt="{{ book.title }}" onerror="this.src='https://img.icons8.com/ios-filled/100/cccccc/book.png'">
+                        </div>
+                </a>
+                <div class="book-info">
+                        <a class="book-title" href="{% url 'books:detail' book.id %}">{{ book.title }}</a>
+                        <div class="book-author">{{ book.author }}</div>
+                        <div class="book-price">{{ book.price|floatformat:0 }}₫</div>
+                        <div class="book-status {% if book.is_available %}in-stock{% else %}out-stock{% endif %}">
+                                {% if book.is_available %}Còn hàng{% else %}Hết hàng{% endif %}
+                        </div>
+                        <a href="{% url 'books:detail' book.id %}" class="book-detail-btn">Xem chi tiết</a>
+                </div>
+        </div>
+        {% endfor %}
+</div>
+{% else %}
+<div style="text-align:center;color:#888;font-size:1.2em;">Không có sách nào.</div>
+{% endif %}
+<style>
+.book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 28px;
+    margin-bottom: 18px;
+}
+.book-card {
+    background: #f8fafc;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(37,99,235,0.07);
+    padding: 18px 14px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: box-shadow 0.18s, transform 0.18s;
+    min-height: 340px;
+}
+.book-card:hover {
+    box-shadow: 0 6px 32px rgba(37,99,235,0.13);
+    transform: translateY(-4px) scale(1.025);
+}
+.book-thumb {
+    width: 110px;
+    height: 160px;
+    background: #e0e7ff;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.book-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.book-info {
+    text-align: center;
+    width: 100%;
+}
+.book-title {
+    font-size: 1.13em;
+    font-weight: 700;
+    color: #2563eb;
+    text-decoration: none;
+    margin-bottom: 2px;
+    display: block;
+    min-height: 2.2em;
+}
+.book-title:hover { text-decoration: underline; }
+.book-author {
+    color: #555;
+    font-size: 0.98em;
+    margin-bottom: 6px;
+}
+.book-price {
+    color: #22c55e;
+    font-size: 1.08em;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.book-status {
+    font-size: 0.97em;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+.in-stock { color: #22c55e; }
+.out-stock { color: #ef4444; }
+.book-detail-btn {
+    display: inline-block;
+    background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+    color: #fff;
+    border-radius: 7px;
+    padding: 7px 18px;
+    font-size: 1em;
+    font-weight: 500;
+    text-decoration: none;
+    margin-top: 2px;
+    transition: background 0.18s;
+}
+.book-detail-btn:hover { background: #2563eb; }
+@media (max-width: 700px) {
+    .book-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+    .book-card { min-height: 260px; padding: 10px 4px; }
+    .book-thumb { width: 70px; height: 100px; }
+}
+</style>
+{% endblock %}

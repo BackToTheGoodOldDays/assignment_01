@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Danh sách sách - BookHaven{% endblock %}
+
+{% block content %}
+<!-- Hero Banner -->
+<div class="hero-banner mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-6">
+            <h1 class="hero-title">Khám phá thế giới <span class="text-primary">tri thức</span></h1>
+            <p class="hero-subtitle">Hàng ngàn đầu sách hay đang chờ bạn. Miễn phí vận chuyển cho đơn từ 300.000đ</p>
+            <div class="d-flex gap-3 mt-4">
+                <a href="#books-section" class="btn btn-primary btn-lg">
+                    <i class="bi bi-book me-2"></i>Khám phá ngay
+                </a>
+                <a href="{% url 'books:categories' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-grid me-2"></i>Xem danh mục
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-6 text-center">
+            <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500" alt="Books" class="hero-image">
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="filter-section mb-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Danh mục</label>
+                    <select name="category" class="form-select">
+                        <option value="">Tất cả danh mục</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.category_id }}" {% if request.GET.category == cat.category_id|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Tác giả</label>
+                    <select name="author" class="form-select">
+                        <option value="">Tất cả tác giả</option>
+                        {% for author in authors %}
+                        <option value="{{ author.author_id }}" {% if request.GET.author == author.author_id|stringformat:"i" %}selected{% endif %}>{{ author.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Giá từ</label>
+                    <input type="number" name="price_min" class="form-control" placeholder="0" value="{{ request.GET.price_min }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Đến</label>
+                    <input type="number" name="price_max" class="form-control" placeholder="1.000.000" value="{{ request.GET.price_max }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel me-2"></i>Lọc
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Sort & View Options -->
+<div class="d-flex justify-content-between align-items-center mb-4" id="books-section">
+    <div>
+        <span class="text-muted">Hiển thị <strong>{{ books|length }}</strong> sách</span>
+    </div>
+    <div class="d-flex gap-3 align-items-center">
+        <label class="me-2">Sắp xếp:</label>
+        <select class="form-select form-select-sm" style="width: auto;" onchange="location = this.value;">
+            <option value="?sort=newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+            <option value="?sort=price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Giá thấp → cao</option>
+            <option value="?sort=price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Giá cao → thấp</option>
+            <option value="?sort=rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Đánh giá cao</option>
+            <option value="?sort=bestseller" {% if request.GET.sort == 'bestseller' %}selected{% endif %}>Bán chạy</option>
+        </select>
+    </div>
+</div>
+
+<!-- Books Grid -->
+{% if books %}
+<div class="row g-4">
+    {% for book in books %}
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="book-card">
+            <div class="book-card-img">
+                {% if book.images.first %}
+                <img src="{{ book.images.first.url }}" alt="{{ book.title }}">
+                {% else %}
+                <img src="https://via.placeholder.com/200x280/e2e8f0/64748b?text={{ book.title|slice:':10' }}" alt="{{ book.title }}">
+                {% endif %}
+                {% if forloop.counter <= 3 %}
+                <span class="book-badge">Hot</span>
+                {% endif %}
+                <div class="book-overlay">
+                    <a href="{% url 'books:detail' book.book_id %}" class="btn btn-light btn-sm">
+                        <i class="bi bi-eye me-1"></i>Xem chi tiết
+                    </a>
+                </div>
+            </div>
+            <div class="book-card-body">
+                <div class="book-category">{{ book.category.name|default:"Sách" }}</div>
+                <h5 class="book-title">
+                    <a href="{% url 'books:detail' book.book_id %}">{{ book.title }}</a>
+                </h5>
+                <div class="book-author">
+                    <i class="bi bi-person me-1"></i>{{ book.author.name|default:"Chưa cập nhật" }}
+                </div>
+                <div class="book-rating">
+                    {% with rating=book.average_rating|default:0 %}
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= rating %}
+                        <i class="bi bi-star-fill"></i>
+                        {% else %}
+                        <i class="bi bi-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                    <span>({{ book.book_rating.total_ratings|default:0 }} đánh giá)</span>
+                </div>
+                <div class="book-price mb-3">
+                    <span class="price-current">{{ book.price|floatformat:0 }}đ</span>
+                </div>
+                <form method="post" action="{% url 'cart:add' book.book_id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-cart">
+                        <i class="bi bi-cart-plus"></i>Thêm vào giỏ
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<nav class="mt-5">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<!-- Empty State -->
+<div class="empty-state">
+    <i class="bi bi-book"></i>
+    <h3>Chưa có sách nào</h3>
+    <p class="text-muted">Hãy thêm sách vào hệ thống để bắt đầu</p>
+    <a href="{% url 'staff:add_book' %}" class="btn btn-primary mt-3">
+        <i class="bi bi-plus-lg me-2"></i>Thêm sách mới
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-banner {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-radius: 24px;
+        padding: 50px 40px;
+        margin-top: -10px;
+    }
+    
+    .hero-title {
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        margin-top: 15px;
+    }
+    
+    .hero-image {
+        max-width: 400px;
+        border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    }
+    
+    .book-card .book-title a {
+        color: var(--text-dark);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    
+    .book-card .book-title a:hover {
+        color: var(--secondary-color);
+    }
+    
+    .book-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .book-card:hover .book-overlay {
+        opacity: 1;
+    }
+    
+    .filter-section .form-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    
+    .page-link {
+        border: none;
+        padding: 10px 16px;
+        margin: 0 3px;
+        border-radius: 8px;
+        color: var(--text-dark);
+    }
+    
+    .page-item.active .page-link {
+        background: var(--secondary-color);
+        color: white;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="categories-container">
+    <h1>Danh mục sách</h1>
+    
+    <div class="categories-grid">
+        {% for category in categories %}
+        <a href="{% url 'books:category' category_id=category.category_id %}" class="category-card">
+            <div class="category-icon">
+                {% if category.icon %}{{ category.icon }}{% else %}📚{% endif %}
+            </div>
+            <div class="category-info">
+                <h3>{{ category.name }}</h3>
+                <span class="book-count">{{ category.book_count }} sách</span>
+                {% if category.description %}
+                <p class="category-desc">{{ category.description|truncatewords:15 }}</p>
+                {% endif %}
+            </div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <p>Chưa có danh mục nào</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.categories-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.categories-container h1 {
+    color: #2563eb;
+    margin-bottom: 30px;
+    text-align: center;
+}
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+.category-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    gap: 20px;
+}
+.category-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.category-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+}
+.category-info {
+    flex: 1;
+}
+.category-info h3 {
+    color: #1e3a8a;
+    margin-bottom: 6px;
+}
+.book-count {
+    color: #2563eb;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+.category-desc {
+    color: #666;
+    font-size: 0.85em;
+    margin-top: 8px;
+    line-height: 1.4;
+}
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px;
+    color: #888;
+}
+</style>
+{% endblock %}

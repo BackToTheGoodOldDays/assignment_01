@@ -1,0 +1,263 @@
+{% extends 'staff/base_staff.html' %}
+{% block staff_content %}
+<div class="add-book-page">
+    <h1>{% if book %}Sửa thông tin sách{% else %}Thêm sách mới{% endif %}</h1>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <form method="post" class="book-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h2>Thông tin cơ bản</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="title">Tên sách *</label>
+                    <input type="text" name="title" id="title" required
+                           value="{{ book.title|default:'' }}"
+                           placeholder="Nhập tên sách">
+                </div>
+                
+                <div class="form-group">
+                    <label for="isbn">ISBN *</label>
+                    <input type="text" name="isbn" id="isbn" required
+                           value="{{ book.isbn|default:'' }}"
+                           placeholder="978-xxx-xxxx-xxx-x">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="author">Tác giả *</label>
+                    <select name="author" id="author" required>
+                        <option value="">Chọn tác giả</option>
+                        {% for author in authors %}
+                        <option value="{{ author.author_id }}" 
+                                {% if book.author.author_id == author.author_id %}selected{% endif %}>
+                            {{ author.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <a href="#" class="add-new-link" onclick="toggleNewAuthor()">+ Thêm tác giả mới</a>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Danh mục</label>
+                    <select name="category" id="category">
+                        <option value="">Chọn danh mục</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.category_id }}"
+                                {% if book.category.category_id == cat.category_id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group new-author-form" style="display: none;">
+                <label for="new_author_name">Tên tác giả mới</label>
+                <input type="text" name="new_author_name" id="new_author_name"
+                       placeholder="Nhập tên tác giả mới">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="publisher">Nhà xuất bản</label>
+                    <select name="publisher" id="publisher">
+                        <option value="">Chọn NXB</option>
+                        {% for pub in publishers %}
+                        <option value="{{ pub.publisher_id }}"
+                                {% if book.publisher.publisher_id == pub.publisher_id %}selected{% endif %}>
+                            {{ pub.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="publication_date">Năm xuất bản</label>
+                    <input type="date" name="publication_date" id="publication_date"
+                           value="{{ book.publication_date|date:'Y-m-d' }}">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Giá & Tồn kho</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="price">Giá bán (VNĐ) *</label>
+                    <input type="number" name="price" id="price" required min="0"
+                           value="{{ book.price|default:'' }}"
+                           placeholder="100000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="stock_quantity">Số lượng tồn kho</label>
+                    <input type="number" name="stock_quantity" id="stock_quantity" min="0"
+                           value="{{ book.stock_quantity|default:'0' }}"
+                           placeholder="0">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Mô tả</h2>
+            
+            <div class="form-group">
+                <label for="short_description">Mô tả ngắn</label>
+                <textarea name="short_description" id="short_description" rows="3"
+                          placeholder="Mô tả ngắn về sách (hiển thị trong danh sách)">{{ book.short_description|default:'' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Mô tả chi tiết</label>
+                <textarea name="description" id="description" rows="6"
+                          placeholder="Mô tả chi tiết về nội dung sách">{{ book.description|default:'' }}</textarea>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Hình ảnh</h2>
+            
+            <div class="form-group">
+                <label for="image_url">URL hình ảnh</label>
+                <input type="url" name="image_url" id="image_url"
+                       value="{% if book.images.exists %}{{ book.images.first.image_url }}{% endif %}"
+                       placeholder="https://example.com/image.jpg">
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <a href="{% url 'staff:inventory_list' %}" class="btn btn-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary">
+                {% if book %}Cập nhật{% else %}Thêm sách{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.add-book-page h1 {
+    color: #1e3a8a;
+    margin-bottom: 24px;
+}
+.messages {
+    margin-bottom: 20px;
+}
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.alert-success { background: #d1fae5; color: #059669; }
+.alert-error { background: #fee2e2; color: #dc2626; }
+.book-form {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.form-section {
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+.form-section:last-of-type {
+    border-bottom: none;
+}
+.form-section h2 {
+    color: #1e3a8a;
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e7ff;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+.form-group textarea {
+    resize: vertical;
+}
+.add-new-link {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 0.9em;
+    color: #2563eb;
+    text-decoration: none;
+}
+.form-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    padding: 24px;
+    background: #f8fafc;
+    border-radius: 0 0 12px 12px;
+}
+.btn {
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%);
+    color: #fff;
+}
+.btn-secondary {
+    background: #f0f0f0;
+    color: #666;
+}
+</style>
+
+<script>
+function toggleNewAuthor() {
+    const newAuthorForm = document.querySelector('.new-author-form');
+    const authorSelect = document.getElementById('author');
+    
+    if (newAuthorForm.style.display === 'none') {
+        newAuthorForm.style.display = 'block';
+        authorSelect.required = false;
+    } else {
+        newAuthorForm.style.display = 'none';
+        authorSelect.required = true;
+    }
+}
+</script>
+{% endblock %}

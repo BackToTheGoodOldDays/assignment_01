@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý tồn kho - Quản lý</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-header h1 {
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-info {
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-info .name { font-weight: 600; margin-bottom: 4px; }
+        .user-info .role { font-size: 0.85em; opacity: 0.8; }
+        .sidebar-nav { padding: 16px 0; }
+        .nav-section {
+            padding: 8px 24px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-top: 16px;
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .nav-link.active { background: rgba(255,255,255,0.15); border-left: 3px solid #60a5fa; }
+        .nav-icon { font-size: 1.2em; }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 16px 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+        .logout-btn:hover { opacity: 1; color: #fff; }
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 24px;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .page-header h1 { color: #1e3a8a; }
+        .header-actions { display: flex; gap: 12px; }
+        .messages { margin-bottom: 20px; }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .alert-success { background: #d1fae5; color: #059669; }
+        .alert-error { background: #fee2e2; color: #dc2626; }
+        .filters-bar {
+            background: #fff;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .filter-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .filter-select {
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            min-width: 150px;
+        }
+        .table-container {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .inventory-table th {
+            background: #f8fafc;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #1e3a8a;
+            border-bottom: 2px solid #e0e7ff;
+        }
+        .inventory-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .book-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .book-title {
+            color: #333;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .book-author {
+            font-size: 0.85em;
+            color: #666;
+        }
+        .price {
+            color: #22c55e;
+            font-weight: 600;
+        }
+        .qty-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            background: #d1fae5;
+            color: #059669;
+        }
+        .qty-badge.low { background: #fef3c7; color: #d97706; }
+        .qty-badge.out { background: #fee2e2; color: #dc2626; }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+        .status-ok { background: #d1fae5; color: #059669; }
+        .status-low { background: #fef3c7; color: #d97706; }
+        .status-out { background: #fee2e2; color: #dc2626; }
+        .actions { display: flex; gap: 8px; }
+        .btn-action {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+        }
+        .btn-import { background: #dbeafe; color: #2563eb; }
+        .btn-adjust { background: #fef3c7; color: #d97706; }
+        .btn-edit { background: #f3f4f6; color: #333; }
+        .empty-row {
+            text-align: center;
+            color: #888;
+            padding: 40px !important;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .page-link {
+            padding: 8px 14px;
+            border-radius: 6px;
+            background: #fff;
+            color: #333;
+            text-decoration: none;
+        }
+        .page-link.active { background: #2563eb; color: #fff; }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary { background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%); color: #fff; }
+        .btn-secondary { background: #f3f4f6; color: #333; }
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .modal-content h2 {
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+        .modal-book-title {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .current-stock {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .sidebar-header h1 span:last-child,
+            .user-info,
+            .nav-section,
+            .nav-link span:last-child,
+            .logout-btn span:last-child { display: none; }
+            .main-content { margin-left: 60px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><span>📚</span> <span>Bookstore Admin</span></h1>
+            </div>
+            <div class="user-info">
+                <div class="name">{{ staff.name|default:'Nhân viên' }}</div>
+                <div class="role">{{ staff.role|default:'Nhân viên' }}</div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">Tổng quan</div>
+                <a href="{% url 'web:staff_dashboard' %}" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <div class="nav-section">Quản lý kho</div>
+                <a href="{% url 'web:staff_inventory' %}" class="nav-link active">
+                    <span class="nav-icon">📦</span>
+                    <span>Tồn kho</span>
+                </a>
+                <a href="{% url 'web:staff_add_book' %}" class="nav-link">
+                    <span class="nav-icon">➕</span>
+                    <span>Thêm sách</span>
+                </a>
+                <a href="{% url 'web:staff_import_stock' %}" class="nav-link">
+                    <span class="nav-icon">📥</span>
+                    <span>Nhập kho</span>
+                </a>
+                <div class="nav-section">Đơn hàng</div>
+                <a href="{% url 'web:staff_orders' %}" class="nav-link">
+                    <span class="nav-icon">🛒</span>
+                    <span>Đơn hàng</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{% url 'web:staff_logout' %}" class="logout-btn">
+                    <span>🚪</span>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="inventory-page">
+                <div class="page-header">
+                    <h1>Quản lý tồn kho</h1>
+                    <div class="header-actions">
+                        <a href="{% url 'web:staff_add_book' %}" class="btn btn-primary">+ Thêm sách mới</a>
+                        <a href="{% url 'web:staff_import_stock' %}" class="btn btn-secondary">📥 Nhập kho</a>
+                    </div>
+                </div>
+                
+                {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Filters -->
+                <div class="filters-bar">
+                    <form method="get" class="filter-form">
+                        <input type="text" name="search" value="{{ request.GET.search }}" 
+                               placeholder="Tìm kiếm sách..." class="search-input">
+                        <select name="filter" class="filter-select">
+                            <option value="">Tất cả</option>
+                            <option value="low" {% if request.GET.filter == 'low' or low_stock_filter %}selected{% endif %}>Sắp hết hàng</option>
+                            <option value="out" {% if request.GET.filter == 'out' %}selected{% endif %}>Hết hàng</option>
+                            <option value="available" {% if request.GET.filter == 'available' %}selected{% endif %}>Còn hàng</option>
+                        </select>
+                        <select name="category" class="filter-select">
+                            <option value="">Tất cả danh mục</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.category_id }}" {% if request.GET.category == cat.category_id|stringformat:"d" %}selected{% endif %}>
+                                {{ cat.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary">Lọc</button>
+                    </form>
+                </div>
+                
+                <!-- Inventory Table -->
+                <div class="table-container">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Sách</th>
+                                <th>ISBN</th>
+                                <th>Danh mục</th>
+                                <th>Giá</th>
+                                <th>Tồn kho</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventory %}
+                            <tr>
+                                <td>
+                                    <div class="book-info">
+                                        <strong class="book-title">{{ item.title }}</strong>
+                                        <span class="book-author">{{ item.author_name|default:item.author }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ item.isbn }}</td>
+                                <td>{{ item.category_name|default:item.category|default:'-' }}</td>
+                                <td class="price">{{ item.price|floatformat:0 }}₫</td>
+                                <td class="stock-qty">
+                                    <span class="qty-badge {% if item.stock_quantity < 5 %}low{% elif item.stock_quantity == 0 %}out{% endif %}">
+                                        {{ item.stock_quantity }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if item.stock_quantity == 0 %}
+                                    <span class="status-badge status-out">Hết hàng</span>
+                                    {% elif item.stock_quantity < 10 %}
+                                    <span class="status-badge status-low">Sắp hết</span>
+                                    {% else %}
+                                    <span class="status-badge status-ok">Còn hàng</span>
+                                    {% endif %}
+                                </td>
+                                <td class="actions">
+                                    <button class="btn-action btn-import" 
+                                            onclick="openImportModal({{ item.book_id }}, '{{ item.title|escapejs }}')">
+                                        Nhập
+                                    </button>
+                                    <a href="{% url 'web:staff_inventory_detail' item.book_id %}" class="btn-action btn-adjust">
+                                        Chi tiết
+                                    </a>
+                                    <a href="{% url 'web:staff_edit_book' item.book_id %}" class="btn-action btn-edit">
+                                        Sửa
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="empty-row">Không có sách nào</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if pagination.total_pages > 1 %}
+                <div class="pagination">
+                    {% if pagination.has_prev %}
+                    <a href="?page={{ pagination.page|add:'-1' }}{% if low_stock_filter %}&low_stock=true{% endif %}" class="page-link">&laquo;</a>
+                    {% endif %}
+                    <span class="page-link active">{{ pagination.page }}</span>
+                    {% if pagination.has_next %}
+                    <a href="?page={{ pagination.page|add:'1' }}{% if low_stock_filter %}&low_stock=true{% endif %}" class="page-link">&raquo;</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('importModal')">&times;</span>
+            <h2>Nhập kho</h2>
+            <p class="modal-book-title"></p>
+            <form method="post" action="{% url 'web:staff_import_stock' %}">
+                {% csrf_token %}
+                <input type="hidden" name="book_id" id="import_book_id">
+                <div class="form-group">
+                    <label>Số lượng nhập</label>
+                    <input type="number" name="quantity" min="1" value="10" required>
+                </div>
+                <div class="form-group">
+                    <label>Ghi chú (tùy chọn)</label>
+                    <input type="text" name="notes" placeholder="Nhà cung cấp, lý do...">
+                </div>
+                <button type="submit" class="btn btn-primary">Nhập kho</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function openImportModal(bookId, title) {
+        document.getElementById('import_book_id').value = bookId;
+        document.querySelector('#importModal .modal-book-title').textContent = title;
+        document.getElementById('importModal').classList.add('show');
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('show');
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.classList.remove('show');
+        }
+    }
+    </script>
+</body>
+</html>

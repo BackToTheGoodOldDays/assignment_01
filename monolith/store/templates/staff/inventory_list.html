@@ -1,0 +1,416 @@
+{% extends 'staff/base_staff.html' %}
+{% block staff_content %}
+<div class="inventory-page">
+    <div class="page-header">
+        <h1>Quản lý tồn kho</h1>
+        <div class="header-actions">
+            <a href="{% url 'staff:add_book' %}" class="btn btn-primary">+ Thêm sách mới</a>
+            <a href="{% url 'staff:import_stock' %}" class="btn btn-secondary">📥 Nhập kho</a>
+        </div>
+    </div>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Filters -->
+    <div class="filters-bar">
+        <form method="get" class="filter-form">
+            <input type="text" name="search" value="{{ request.GET.search }}" 
+                   placeholder="Tìm kiếm sách..." class="search-input">
+            <select name="filter" class="filter-select">
+                <option value="">Tất cả</option>
+                <option value="low" {% if request.GET.filter == 'low' %}selected{% endif %}>Sắp hết hàng</option>
+                <option value="out" {% if request.GET.filter == 'out' %}selected{% endif %}>Hết hàng</option>
+                <option value="available" {% if request.GET.filter == 'available' %}selected{% endif %}>Còn hàng</option>
+            </select>
+            <select name="category" class="filter-select">
+                <option value="">Tất cả danh mục</option>
+                {% for cat in categories %}
+                <option value="{{ cat.category_id }}" {% if request.GET.category == cat.category_id|stringformat:"d" %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Lọc</button>
+        </form>
+    </div>
+    
+    <!-- Inventory Table -->
+    <div class="table-container">
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Sách</th>
+                    <th>ISBN</th>
+                    <th>Danh mục</th>
+                    <th>Giá</th>
+                    <th>Tồn kho</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                <tr>
+                    <td>
+                        <div class="book-info">
+                            <strong class="book-title">{{ book.title }}</strong>
+                            <span class="book-author">{{ book.author.name }}</span>
+                        </div>
+                    </td>
+                    <td>{{ book.isbn }}</td>
+                    <td>{{ book.category.name|default:'-' }}</td>
+                    <td class="price">{{ book.price|floatformat:0 }}₫</td>
+                    <td class="stock-qty">
+                        <span class="qty-badge {% if book.stock_quantity < 5 %}low{% elif book.stock_quantity == 0 %}out{% endif %}">
+                            {{ book.stock_quantity }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if book.stock_quantity == 0 %}
+                        <span class="status-badge status-out">Hết hàng</span>
+                        {% elif book.stock_quantity < 10 %}
+                        <span class="status-badge status-low">Sắp hết</span>
+                        {% else %}
+                        <span class="status-badge status-ok">Còn hàng</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <button class="btn-action btn-import" 
+                                onclick="openImportModal({{ book.book_id }}, '{{ book.title|escapejs }}')">
+                            Nhập
+                        </button>
+                        <button class="btn-action btn-adjust"
+                                onclick="openAdjustModal({{ book.book_id }}, '{{ book.title|escapejs }}', {{ book.stock_quantity }})">
+                            Điều chỉnh
+                        </button>
+                        <a href="#" class="btn-action btn-edit" title="Chức năng chưa sẵn sàng">
+                            Sửa
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-row">Không có sách nào</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if books.has_other_pages %}
+    <div class="pagination">
+        {% if books.has_previous %}
+        <a href="?page={{ books.previous_page_number }}" class="page-link">&laquo;</a>
+        {% endif %}
+        {% for num in books.paginator.page_range %}
+        {% if books.number == num %}
+        <span class="page-link active">{{ num }}</span>
+        {% elif num > books.number|add:'-3' and num < books.number|add:'3' %}
+        <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+        {% endif %}
+        {% endfor %}
+        {% if books.has_next %}
+        <a href="?page={{ books.next_page_number }}" class="page-link">&raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Import Modal -->
+<div id="importModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal('importModal')">&times;</span>
+        <h2>Nhập kho</h2>
+        <p class="modal-book-title"></p>
+        <form method="post" action="{% url 'staff:api_quick_import' %}">
+            {% csrf_token %}
+            <input type="hidden" name="book_id" id="import_book_id">
+            <div class="form-group">
+                <label>Số lượng nhập</label>
+                <input type="number" name="quantity" min="1" value="10" required>
+            </div>
+            <div class="form-group">
+                <label>Ghi chú (tùy chọn)</label>
+                <input type="text" name="notes" placeholder="Nhà cung cấp, lý do...">
+            </div>
+            <button type="submit" class="btn btn-primary">Nhập kho</button>
+        </form>
+    </div>
+</div>
+
+<!-- Adjust Modal -->
+<div id="adjustModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal('adjustModal')">&times;</span>
+        <h2>Điều chỉnh tồn kho</h2>
+        <p class="modal-book-title"></p>
+        <p class="current-stock">Tồn kho hiện tại: <strong></strong></p>
+        <form method="post" action="{% url 'staff:adjust_stock' %}">
+            {% csrf_token %}
+            <input type="hidden" name="book_id" id="adjust_book_id">
+            <div class="form-group">
+                <label>Tồn kho mới</label>
+                <input type="number" name="new_quantity" min="0" id="new_quantity" required>
+            </div>
+            <div class="form-group">
+                <label>Lý do điều chỉnh</label>
+                <select name="reason" required>
+                    <option value="inventory_check">Kiểm kê</option>
+                    <option value="damage">Hư hỏng</option>
+                    <option value="return">Khách trả hàng</option>
+                    <option value="other">Lý do khác</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <input type="text" name="notes" placeholder="Chi tiết...">
+            </div>
+            <button type="submit" class="btn btn-primary">Điều chỉnh</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.page-header h1 {
+    color: #1e3a8a;
+}
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+.messages {
+    margin-bottom: 20px;
+}
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.alert-success { background: #d1fae5; color: #059669; }
+.alert-error { background: #fee2e2; color: #dc2626; }
+.filters-bar {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.filter-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.search-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+}
+.filter-select {
+    padding: 10px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    min-width: 150px;
+}
+.table-container {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.inventory-table th {
+    background: #f8fafc;
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #1e3a8a;
+    border-bottom: 2px solid #e0e7ff;
+}
+.inventory-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.book-info {
+    display: flex;
+    flex-direction: column;
+}
+.book-title {
+    color: #333;
+    margin-bottom: 4px;
+}
+.book-author {
+    font-size: 0.85em;
+    color: #666;
+}
+.price {
+    color: #22c55e;
+    font-weight: 600;
+}
+.qty-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    background: #d1fae5;
+    color: #059669;
+}
+.qty-badge.low {
+    background: #fef3c7;
+    color: #d97706;
+}
+.qty-badge.out {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+}
+.status-ok { background: #d1fae5; color: #059669; }
+.status-low { background: #fef3c7; color: #d97706; }
+.status-out { background: #fee2e2; color: #dc2626; }
+.actions {
+    display: flex;
+    gap: 8px;
+}
+.btn-action {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+}
+.btn-import { background: #dbeafe; color: #2563eb; }
+.btn-adjust { background: #fef3c7; color: #d97706; }
+.btn-edit { background: #f3f4f6; color: #333; }
+.empty-row {
+    text-align: center;
+    color: #888;
+    padding: 40px !important;
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+.page-link {
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: #fff;
+    color: #333;
+    text-decoration: none;
+}
+.page-link.active {
+    background: #2563eb;
+    color: #fff;
+}
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal.show {
+    display: flex;
+}
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+}
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+.modal-content h2 {
+    color: #1e3a8a;
+    margin-bottom: 10px;
+}
+.modal-book-title {
+    color: #666;
+    margin-bottom: 20px;
+}
+.current-stock {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+}
+</style>
+
+<script>
+function openImportModal(bookId, title) {
+    document.getElementById('import_book_id').value = bookId;
+    document.querySelector('#importModal .modal-book-title').textContent = title;
+    document.getElementById('importModal').classList.add('show');
+}
+
+function openAdjustModal(bookId, title, currentQty) {
+    document.getElementById('adjust_book_id').value = bookId;
+    document.querySelector('#adjustModal .modal-book-title').textContent = title;
+    document.querySelector('#adjustModal .current-stock strong').textContent = currentQty;
+    document.getElementById('new_quantity').value = currentQty;
+    document.getElementById('adjustModal').classList.add('show');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('show');
+    }
+}
+</script>
+{% endblock %}

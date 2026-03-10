@@ -1,0 +1,584 @@
+{% extends 'base.html' %}
+
+{% block title %}Thanh toán - BookHaven{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <h1 class="checkout-title"><i class="bi bi-credit-card me-2"></i>Thanh toán</h1>
+    
+    <div class="checkout-grid">
+        <!-- Order Summary -->
+        <div class="checkout-section order-summary-section">
+            <h2 class="section-title"><i class="bi bi-bag-check me-2"></i>Đơn hàng của bạn</h2>
+            <div class="order-items">
+                {% for item in cart.items %}
+                <div class="order-item">
+                    <div class="item-image">
+                        {% if item.image_url %}
+                        <img src="{{ item.image_url }}" alt="{{ item.book_title }}">
+                        {% else %}
+                        <img src="https://via.placeholder.com/60x80/e2e8f0/64748b?text=Book" alt="{{ item.book_title }}">
+                        {% endif %}
+                    </div>
+                    <div class="item-details">
+                        <span class="item-name">{{ item.book_title }}</span>
+                        <span class="item-qty">Số lượng: {{ item.quantity }}</span>
+                    </div>
+                    <span class="item-price">{{ item.subtotal|floatformat:0 }}đ</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="order-totals">
+                <div class="total-row">
+                    <span>Tạm tính:</span>
+                    <span>{{ cart.total|floatformat:0 }}đ</span>
+                </div>
+                <div class="total-row">
+                    <span>Thuế (10%):</span>
+                    <span id="tax-amount">{{ tax|default:0|floatformat:0 }}đ</span>
+                </div>
+                <div class="total-row shipping-fee" id="shipping-fee-row">
+                    <span>Phí vận chuyển:</span>
+                    <span id="shipping-fee">0đ</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>Tổng cộng:</span>
+                    <span id="grand-total">{{ cart.total|floatformat:0 }}đ</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Checkout Form -->
+        <form method="post" class="checkout-form">
+            {% csrf_token %}
+            
+            <!-- Shipping Method -->
+            <div class="checkout-section">
+                <h2 class="section-title"><i class="bi bi-truck me-2"></i>Phương thức vận chuyển</h2>
+                <div class="method-options">
+                    {% for method in shipping_methods %}
+                    <label class="method-option">
+                        <input type="radio" name="shipping_method_id" value="{{ method.method_id }}" 
+                               data-fee="{{ method.price }}"
+                               {% if forloop.first %}checked{% endif %} required>
+                        <div class="method-info">
+                            <span class="method-name">{{ method.name }}</span>
+                            <span class="method-desc">{{ method.description|default:"Giao hàng tiêu chuẩn" }}</span>
+                            <span class="method-price">{{ method.price|floatformat:0 }}đ</span>
+                            <span class="method-time"><i class="bi bi-clock me-1"></i>{{ method.estimated_days|default:"3-5" }} ngày</span>
+                        </div>
+                    </label>
+                    {% empty %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Không có phương thức vận chuyển khả dụng.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Payment Method -->
+            <div class="checkout-section">
+                <h2 class="section-title"><i class="bi bi-wallet2 me-2"></i>Phương thức thanh toán</h2>
+                <div class="method-options">
+                    {% for method in payment_methods %}
+                    <label class="method-option">
+                        <input type="radio" name="payment_method_id" value="{{ method.method_id }}"
+                               {% if forloop.first %}checked{% endif %} required>
+                        <div class="method-info">
+                            <span class="method-name">
+                                {% if method.name == 'COD' or 'COD' in method.name %}
+                                <i class="bi bi-cash-coin me-2"></i>
+                                {% elif 'card' in method.name|lower or 'thẻ' in method.name|lower %}
+                                <i class="bi bi-credit-card me-2"></i>
+                                {% elif 'bank' in method.name|lower or 'ngân hàng' in method.name|lower %}
+                                <i class="bi bi-bank me-2"></i>
+                                {% else %}
+                                <i class="bi bi-wallet me-2"></i>
+                                {% endif %}
+                                {{ method.name }}
+                            </span>
+                            {% if method.description %}
+                            <span class="method-desc">{{ method.description }}</span>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% empty %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Không có phương thức thanh toán khả dụng.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Delivery Address -->
+            <div class="checkout-section">
+                <h2 class="section-title"><i class="bi bi-geo-alt me-2"></i>Địa chỉ giao hàng</h2>
+                
+                {% if addresses %}
+                <div class="saved-addresses">
+                    {% for addr in addresses %}
+                    <label class="address-option">
+                        <input type="radio" name="shipping_address_id" value="{{ addr.address_id }}"
+                               {% if addr.is_default or forloop.first %}checked{% endif %}>
+                        <div class="address-info">
+                            <span class="recipient"><i class="bi bi-person me-1"></i>{{ addr.recipient_name }} - {{ addr.phone }}</span>
+                            <span class="address"><i class="bi bi-house me-1"></i>{{ addr.address_line1 }}, {{ addr.city }}</span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                    <label class="address-option add-new">
+                        <input type="radio" name="shipping_address_id" value="" id="new-address-radio">
+                        <span><i class="bi bi-plus-circle me-2"></i>Thêm địa chỉ mới</span>
+                    </label>
+                </div>
+                {% endif %}
+                
+                <div class="new-address-form" id="new-address-form" {% if addresses %}style="display:none;"{% endif %}>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="bi bi-person me-1"></i>Tên người nhận *</label>
+                            <input type="text" name="recipient_name" class="form-control" placeholder="Nguyễn Văn A">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="bi bi-telephone me-1"></i>Số điện thoại *</label>
+                            <input type="text" name="phone" class="form-control" placeholder="0901234567">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="bi bi-house me-1"></i>Địa chỉ *</label>
+                        <input type="text" name="address_line1" class="form-control" placeholder="Số nhà, tên đường">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Phường/Xã</label>
+                            <input type="text" name="ward" class="form-control" placeholder="Phường/Xã">
+                        </div>
+                        <div class="form-group">
+                            <label>Quận/Huyện</label>
+                            <input type="text" name="district" class="form-control" placeholder="Quận/Huyện">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="bi bi-building me-1"></i>Tỉnh/Thành phố *</label>
+                            <input type="text" name="city" class="form-control" placeholder="Hà Nội">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="bi bi-mailbox me-1"></i>Mã bưu điện</label>
+                            <input type="text" name="postal_code" class="form-control" placeholder="100000">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Notes -->
+            <div class="checkout-section">
+                <h2 class="section-title"><i class="bi bi-chat-text me-2"></i>Ghi chú đơn hàng</h2>
+                <div class="form-group">
+                    <textarea name="order_notes" class="form-control" rows="3" placeholder="Ghi chú về đơn hàng, ví dụ: thời gian hay chỉ dẫn địa điểm giao hàng chi tiết hơn."></textarea>
+                </div>
+            </div>
+            
+            <div class="checkout-actions">
+                <a href="{% url 'web:cart' %}" class="btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Quay lại giỏ hàng
+                </a>
+                <button type="submit" class="btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>Đặt hàng
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+.checkout-title {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-color, #2563eb);
+}
+
+.checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 30px;
+}
+
+.checkout-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+.order-summary-section {
+    position: sticky;
+    top: 100px;
+    height: fit-content;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-color, #2563eb);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e0e7ff;
+    display: flex;
+    align-items: center;
+}
+
+.order-items {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.item-image img {
+    width: 60px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.item-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.item-name {
+    font-weight: 500;
+    color: var(--text-dark, #1e293b);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.item-qty {
+    font-size: 0.85rem;
+    color: var(--text-muted, #64748b);
+}
+
+.item-price {
+    font-weight: 600;
+    color: #dc2626;
+    white-space: nowrap;
+}
+
+.order-totals {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #e0e7ff;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    color: var(--text-muted, #64748b);
+}
+
+.grand-total {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color, #2563eb);
+    border-top: 2px solid #e2e8f0;
+    padding-top: 16px;
+    margin-top: 10px;
+}
+
+.grand-total span:last-child {
+    color: #dc2626;
+}
+
+.method-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.method-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+    border: 2px solid #e0e7ff;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.method-option:hover {
+    border-color: var(--primary-color, #2563eb);
+    background: #f8fafc;
+}
+
+.method-option input[type="radio"] {
+    margin-top: 4px;
+    width: 18px;
+    height: 18px;
+}
+
+.method-option input:checked + .method-info .method-name {
+    color: var(--primary-color, #2563eb);
+}
+
+.method-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.method-name {
+    font-weight: 600;
+    color: var(--text-dark, #1e293b);
+}
+
+.method-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted, #64748b);
+}
+
+.method-price {
+    color: #22c55e;
+    font-weight: 600;
+}
+
+.method-time {
+    font-size: 0.85rem;
+    color: var(--text-muted, #64748b);
+}
+
+.saved-addresses {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.address-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    border: 2px solid #e0e7ff;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.address-option:hover {
+    border-color: var(--primary-color, #2563eb);
+    background: #f8fafc;
+}
+
+.address-option.add-new {
+    border-style: dashed;
+    justify-content: center;
+}
+
+.address-option.add-new span {
+    color: var(--primary-color, #2563eb);
+    font-weight: 500;
+}
+
+.address-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.recipient {
+    font-weight: 600;
+    color: var(--text-dark, #1e293b);
+}
+
+.address {
+    font-size: 0.9rem;
+    color: var(--text-muted, #64748b);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-dark, #1e293b);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e7ff;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.25s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #2563eb);
+}
+
+.checkout-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--secondary-color, #38bdf8), var(--primary-color, #2563eb));
+    color: #fff;
+    border: none;
+    padding: 16px 36px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+}
+
+.btn-secondary {
+    background: #f8fafc;
+    color: var(--text-dark, #1e293b);
+    border: 2px solid #e2e8f0;
+    padding: 16px 36px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+    color: var(--text-dark, #1e293b);
+}
+
+@media (max-width: 992px) {
+    .checkout-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-summary-section {
+        position: static;
+        order: 2;
+    }
+    
+    .checkout-form {
+        order: 1;
+    }
+}
+
+@media (max-width: 576px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .checkout-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const subtotal = {{ cart.total|default:0 }};
+    const taxRate = 0.1;
+    const tax = subtotal * taxRate;
+    const shippingInputs = document.querySelectorAll('input[name="shipping_method_id"]');
+    const shippingFeeSpan = document.getElementById('shipping-fee');
+    const grandTotalSpan = document.getElementById('grand-total');
+    const taxAmountSpan = document.getElementById('tax-amount');
+    const newAddressRadio = document.getElementById('new-address-radio');
+    const newAddressForm = document.getElementById('new-address-form');
+    
+    function formatCurrency(amount) {
+        return Math.round(amount).toLocaleString('vi-VN') + 'đ';
+    }
+    
+    function updateTotal() {
+        const selectedShipping = document.querySelector('input[name="shipping_method_id"]:checked');
+        const shippingFee = selectedShipping ? parseFloat(selectedShipping.dataset.fee || 0) : 0;
+        const grandTotal = subtotal + tax + shippingFee;
+        
+        if (taxAmountSpan) taxAmountSpan.textContent = formatCurrency(tax);
+        if (shippingFeeSpan) shippingFeeSpan.textContent = formatCurrency(shippingFee);
+        if (grandTotalSpan) grandTotalSpan.textContent = formatCurrency(grandTotal);
+    }
+    
+    shippingInputs.forEach(input => {
+        input.addEventListener('change', updateTotal);
+    });
+    
+    if (newAddressRadio && newAddressForm) {
+        const addressRadios = document.querySelectorAll('input[name="shipping_address_id"]');
+        addressRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === '') {
+                    newAddressForm.style.display = 'block';
+                } else {
+                    newAddressForm.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    updateTotal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Viết đánh giá - {{ book.title }} - BookHaven{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="text-primary mb-3">
+                    <i class="bi bi-pencil-square me-2"></i>Viết đánh giá
+                </h1>
+                <p class="text-muted">Chia sẻ cảm nhận của bạn về cuốn sách này</p>
+            </div>
+            
+            <!-- Book Info Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-4">
+                        {% if book.image_url %}
+                        <img src="{{ book.image_url }}" alt="{{ book.title }}" class="rounded" style="width: 80px; height: 120px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 120px;">
+                            <i class="bi bi-book text-muted fs-1"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h4 class="mb-1">{{ book.title }}</h4>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-person me-1"></i>{{ book.author_name|default:"Chưa cập nhật" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Review Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-star me-2"></i>Đánh giá của bạn</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Rating -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Xếp hạng <span class="text-danger">*</span></label>
+                            <div class="rating-input">
+                                <div class="btn-group" role="group">
+                                    {% for i in "12345" %}
+                                    <input type="radio" class="btn-check" name="rating" id="rating{{ i }}" value="{{ i }}" {% if i == "5" %}checked{% endif %}>
+                                    <label class="btn btn-outline-warning" for="rating{{ i }}">
+                                        <i class="bi bi-star-fill me-1"></i>{{ i }}
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">Chọn số sao để đánh giá (1 - Kém, 5 - Xuất sắc)</small>
+                        </div>
+                        
+                        <!-- Title -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-semibold">Tiêu đề đánh giá <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-lg" id="title" name="title" 
+                                   placeholder="Tóm tắt cảm nhận của bạn..." required>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div class="mb-4">
+                            <label for="content" class="form-label fw-semibold">Nội dung đánh giá <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="content" name="content" rows="6" 
+                                      placeholder="Chia sẻ chi tiết cảm nhận của bạn về cuốn sách này..." required></textarea>
+                            <small class="text-muted mt-2 d-block">Tối thiểu 20 ký tự</small>
+                        </div>
+                        
+                        <!-- Pros/Cons (Optional) -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="pros" class="form-label fw-semibold text-success">
+                                    <i class="bi bi-hand-thumbs-up me-1"></i>Điểm mạnh
+                                </label>
+                                <textarea class="form-control" id="pros" name="pros" rows="3" 
+                                          placeholder="Những điều bạn thích..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cons" class="form-label fw-semibold text-danger">
+                                    <i class="bi bi-hand-thumbs-down me-1"></i>Điểm yếu
+                                </label>
+                                <textarea class="form-control" id="cons" name="cons" rows="3" 
+                                          placeholder="Những điều có thể cải thiện..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-3 justify-content-end pt-3 border-top">
+                            <a href="{% url 'web:book_detail' book.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-send me-2"></i>Gửi đánh giá
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Guidelines -->
+            <div class="card border-0 bg-light mt-4">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3"><i class="bi bi-info-circle me-2"></i>Hướng dẫn viết đánh giá</h6>
+                    <ul class="text-muted small mb-0">
+                        <li>Hãy trung thực và chia sẻ ý kiến cá nhân của bạn</li>
+                        <li>Tập trung vào nội dung, cách viết và giá trị của cuốn sách</li>
+                        <li>Tránh sử dụng ngôn từ thiếu văn hóa hoặc xúc phạm</li>
+                        <li>Đánh giá sẽ được kiểm duyệt trước khi hiển thị</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rating-input .btn-outline-warning {
+        border-width: 2px;
+    }
+    
+    .rating-input .btn-check:checked + .btn-outline-warning {
+        background-color: #f59e0b;
+        border-color: #f59e0b;
+        color: white;
+    }
+    
+    .form-control:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="saved-carts-container">
+    <h1>Giỏ hàng đã lưu</h1>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if saved_carts %}
+    <div class="saved-carts-list">
+        {% for saved in saved_carts %}
+        <div class="saved-cart-card">
+            <div class="saved-cart-header">
+                <h3>{{ saved.name }}</h3>
+                <span class="saved-date">Lưu ngày: {{ saved.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
+            
+            <div class="saved-cart-items">
+                {% for item in saved.cart.items.all %}
+                <div class="cart-item-row">
+                    <span class="item-title">{{ item.book.title }}</span>
+                    <span class="item-qty">x{{ item.quantity }}</span>
+                    <span class="item-price">{{ item.subtotal|floatformat:0 }}₫</span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="saved-cart-footer">
+                <div class="cart-total">
+                    <span>Tổng cộng:</span>
+                    <strong>{{ saved.cart.total_price|floatformat:0 }}₫</strong>
+                </div>
+                <div class="cart-actions">
+                    <form method="post" action="{% url 'cart:restore' saved_cart_id=saved.saved_id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-restore">Khôi phục</button>
+                    </form>
+                    <form method="post" action="{% url 'cart:delete_saved' saved_cart_id=saved.saved_id %}" 
+                          style="display:inline;"
+                          onsubmit="return confirm('Bạn có chắc muốn xóa giỏ hàng này?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-delete">Xóa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">💾</div>
+        <h2>Chưa có giỏ hàng nào được lưu</h2>
+        <p>Bạn có thể lưu giỏ hàng hiện tại để mua sau</p>
+        <a href="{% url 'cart:view' %}" class="btn-primary">Xem giỏ hàng</a>
+    </div>
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="{% url 'cart:view' %}">&larr; Quay lại giỏ hàng</a>
+    </div>
+</div>
+
+<style>
+.saved-carts-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.saved-carts-container h1 {
+    color: #2563eb;
+    margin-bottom: 30px;
+}
+.messages {
+    margin-bottom: 20px;
+}
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.alert-success { background: #d1fae5; color: #059669; }
+.alert-error { background: #fee2e2; color: #dc2626; }
+.saved-carts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.saved-cart-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+.saved-cart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+}
+.saved-cart-header h3 {
+    margin: 0;
+}
+.saved-date {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+.saved-cart-items {
+    padding: 16px 20px;
+}
+.cart-item-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.cart-item-row:last-child {
+    border-bottom: none;
+}
+.item-title {
+    color: #333;
+}
+.item-qty {
+    color: #666;
+}
+.item-price {
+    color: #22c55e;
+    font-weight: 600;
+}
+.saved-cart-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e0e7ff;
+}
+.cart-total {
+    font-size: 1.1em;
+}
+.cart-total strong {
+    color: #2563eb;
+    margin-left: 8px;
+}
+.cart-actions {
+    display: flex;
+    gap: 10px;
+}
+.btn-restore, .btn-delete {
+    padding: 8px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+.btn-restore {
+    background: #22c55e;
+    color: #fff;
+}
+.btn-delete {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.empty-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+.empty-state h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+.empty-state p {
+    color: #666;
+    margin-bottom: 20px;
+}
+.btn-primary {
+    display: inline-block;
+    padding: 12px 30px;
+    background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+}
+.back-link {
+    margin-top: 30px;
+}
+.back-link a {
+    color: #2563eb;
+    text-decoration: none;
+}
+</style>
+{% endblock %}

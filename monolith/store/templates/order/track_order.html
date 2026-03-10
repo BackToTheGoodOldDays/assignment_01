@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="track-container">
+    <h1>Theo dõi đơn hàng #{{ order.order_number }}</h1>
+    
+    <div class="track-status-header">
+        <div class="status-badge status-{{ order.status.name|lower|default:'pending' }}">
+            {{ order.status.name|default:'Pending' }}
+        </div>
+        {% if order.shipping and order.shipping.tracking_number %}
+        <div class="tracking-code">
+            <span>Mã vận đơn:</span>
+            <strong>{{ order.shipping.tracking_number }}</strong>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-step {% if order.status.name in 'Pending,Processing,Shipped,Delivered' %}active{% endif %}">
+            <div class="step-icon">📋</div>
+            <span>Đặt hàng</span>
+        </div>
+        <div class="progress-line {% if order.status.name in 'Processing,Shipped,Delivered' %}active{% endif %}"></div>
+        <div class="progress-step {% if order.status.name in 'Processing,Shipped,Delivered' %}active{% endif %}">
+            <div class="step-icon">⚙️</div>
+            <span>Xử lý</span>
+        </div>
+        <div class="progress-line {% if order.status.name in 'Shipped,Delivered' %}active{% endif %}"></div>
+        <div class="progress-step {% if order.status.name in 'Shipped,Delivered' %}active{% endif %}">
+            <div class="step-icon">🚚</div>
+            <span>Giao hàng</span>
+        </div>
+        <div class="progress-line {% if order.status.name == 'Delivered' %}active{% endif %}"></div>
+        <div class="progress-step {% if order.status.name == 'Delivered' %}active{% endif %}">
+            <div class="step-icon">✅</div>
+            <span>Hoàn thành</span>
+        </div>
+    </div>
+    
+    <div class="track-content">
+        <!-- Timeline -->
+        <div class="timeline-section">
+            <h2>Lịch sử cập nhật</h2>
+            <div class="timeline">
+                {% for track in tracking %}
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-status">{{ track.status }}</span>
+                            <span class="timeline-time">{{ track.timestamp|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        {% if track.description %}
+                        <p class="timeline-desc">{{ track.description }}</p>
+                        {% endif %}
+                        {% if track.location %}
+                        <span class="timeline-location">📍 {{ track.location }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-status">Đơn hàng đã được tạo</span>
+                            <span class="timeline-time">{{ order.order_date|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Order Info -->
+        <div class="info-section">
+            <div class="info-card">
+                <h3>Thông tin đơn hàng</h3>
+                <div class="info-row">
+                    <span>Ngày đặt:</span>
+                    <strong>{{ order.order_date|date:"d/m/Y H:i" }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Tổng tiền:</span>
+                    <strong class="price">{{ order.total_price|floatformat:0 }}₫</strong>
+                </div>
+                <div class="info-row">
+                    <span>Số sản phẩm:</span>
+                    <strong>{{ order.items.count }}</strong>
+                </div>
+            </div>
+            
+            {% if order.shipping %}
+            <div class="info-card">
+                <h3>Thông tin giao hàng</h3>
+                <div class="info-row">
+                    <span>Phương thức:</span>
+                    <strong>{{ order.shipping.method.name }}</strong>
+                </div>
+                {% if order.shipping.estimated_delivery %}
+                <div class="info-row">
+                    <span>Dự kiến:</span>
+                    <strong>{{ order.shipping.estimated_delivery|date:"d/m/Y" }}</strong>
+                </div>
+                {% endif %}
+                {% if order.shipping.delivery_address %}
+                <div class="address-info">
+                    <p><strong>{{ order.shipping.delivery_address.recipient_name }}</strong></p>
+                    <p>{{ order.shipping.delivery_address.phone }}</p>
+                    <p>{{ order.shipping.delivery_address.detail }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="info-card">
+                <h3>Sản phẩm</h3>
+                {% for item in order.items.all %}
+                <div class="product-item">
+                    <span class="product-name">{{ item.book.title }}</span>
+                    <span class="product-qty">x{{ item.quantity }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-bar">
+        <a href="{% url 'cart:detail' order_id=order.order_id %}" class="btn-secondary">Xem chi tiết</a>
+        <a href="{% url 'cart:orders' %}" class="btn-primary">Danh sách đơn hàng</a>
+    </div>
+</div>
+
+<style>
+.track-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.track-container h1 {
+    color: #2563eb;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.track-status-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+.status-badge {
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 1.1em;
+}
+.status-pending { background: #fef3c7; color: #d97706; }
+.status-processing { background: #dbeafe; color: #2563eb; }
+.status-shipped { background: #e0e7ff; color: #4f46e5; }
+.status-delivered { background: #d1fae5; color: #059669; }
+.status-cancelled { background: #fee2e2; color: #dc2626; }
+.tracking-code {
+    color: #666;
+}
+.tracking-code strong {
+    display: block;
+    color: #333;
+    font-size: 1.1em;
+}
+
+/* Progress Bar */
+.progress-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding: 0 20px;
+}
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.4;
+}
+.progress-step.active {
+    opacity: 1;
+}
+.step-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    margin-bottom: 8px;
+}
+.progress-step.active .step-icon {
+    background: #dbeafe;
+}
+.progress-step span {
+    font-size: 0.85em;
+    color: #666;
+}
+.progress-line {
+    flex: 1;
+    height: 3px;
+    background: #e0e0e0;
+    margin: 0 10px;
+    margin-bottom: 30px;
+}
+.progress-line.active {
+    background: #2563eb;
+}
+
+.track-content {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 30px;
+}
+
+/* Timeline */
+.timeline-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.timeline-section h2 {
+    color: #2563eb;
+    margin-bottom: 24px;
+    font-size: 1.2em;
+}
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 5px;
+    bottom: 5px;
+    width: 2px;
+    background: linear-gradient(180deg, #2563eb, #e0e7ff);
+}
+.timeline-item {
+    position: relative;
+    padding-bottom: 24px;
+}
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+.timeline-marker {
+    position: absolute;
+    left: -26px;
+    width: 14px;
+    height: 14px;
+    background: #2563eb;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #2563eb;
+}
+.timeline-content {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+}
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.timeline-status {
+    font-weight: 600;
+    color: #333;
+}
+.timeline-time {
+    font-size: 0.85em;
+    color: #888;
+}
+.timeline-desc {
+    color: #666;
+    margin: 8px 0;
+    font-size: 0.9em;
+}
+.timeline-location {
+    font-size: 0.85em;
+    color: #2563eb;
+}
+
+/* Info Section */
+.info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.info-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.info-card h3 {
+    color: #2563eb;
+    margin-bottom: 16px;
+    font-size: 1.1em;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e7ff;
+}
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.info-row:last-child {
+    border-bottom: none;
+}
+.price {
+    color: #22c55e;
+}
+.address-info {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+.address-info p {
+    margin: 4px 0;
+    color: #444;
+}
+.product-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.product-item:last-child {
+    border-bottom: none;
+}
+.product-name {
+    color: #333;
+}
+.product-qty {
+    color: #666;
+}
+
+.action-bar {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 30px;
+}
+.btn-primary, .btn-secondary {
+    padding: 12px 30px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+}
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .track-content {
+        grid-template-columns: 1fr;
+    }
+    .progress-bar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .progress-line {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

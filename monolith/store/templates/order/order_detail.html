@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="order-detail-container">
+    <div class="order-header">
+        <div>
+            <h1>Đơn hàng #{{ order.order_number }}</h1>
+            <p class="order-date">Đặt ngày: {{ order.order_date|date:"d/m/Y H:i" }}</p>
+        </div>
+        <span class="order-status status-{{ order.status.name|lower|default:'pending' }}">
+            {{ order.status.name|default:'Pending' }}
+        </span>
+    </div>
+    
+    <div class="order-grid">
+        <!-- Order Items -->
+        <div class="order-section">
+            <h2>Sản phẩm</h2>
+            <div class="items-list">
+                {% for item in order.items.all %}
+                <div class="item-row">
+                    <div class="item-info">
+                        <a href="{% url 'books:detail' pk=item.book.book_id %}" class="item-title">
+                            {{ item.book.title }}
+                        </a>
+                        <span class="item-author">{{ item.book.author.name }}</span>
+                    </div>
+                    <span class="item-qty">x{{ item.quantity }}</span>
+                    <span class="item-price">{{ item.unit_price|floatformat:0 }}₫</span>
+                    <span class="item-subtotal">{{ item.subtotal|floatformat:0 }}₫</span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>Tạm tính:</span>
+                    <span>{{ order.subtotal|floatformat:0 }}₫</span>
+                </div>
+                <div class="summary-row">
+                    <span>Thuế:</span>
+                    <span>{{ order.tax_amount|floatformat:0 }}₫</span>
+                </div>
+                <div class="summary-row">
+                    <span>Phí vận chuyển:</span>
+                    <span>{{ order.shipping_fee|floatformat:0 }}₫</span>
+                </div>
+                {% if order.discount_amount > 0 %}
+                <div class="summary-row discount">
+                    <span>Giảm giá:</span>
+                    <span>-{{ order.discount_amount|floatformat:0 }}₫</span>
+                </div>
+                {% endif %}
+                <div class="summary-row total">
+                    <span>Tổng cộng:</span>
+                    <span>{{ order.total_price|floatformat:0 }}₫</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Info -->
+        <div class="order-info-col">
+            <!-- Shipping Info -->
+            {% if order.shipping %}
+            <div class="info-card">
+                <h3>Thông tin giao hàng</h3>
+                <p><strong>Phương thức:</strong> {{ order.shipping.method.name }}</p>
+                {% if order.shipping.delivery_address %}
+                <p><strong>Người nhận:</strong> {{ order.shipping.delivery_address.recipient_name }}</p>
+                <p><strong>SĐT:</strong> {{ order.shipping.delivery_address.phone }}</p>
+                <p><strong>Địa chỉ:</strong> {{ order.shipping.delivery_address.detail }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Payment Info -->
+            {% if order.payments.exists %}
+            <div class="info-card">
+                <h3>Thanh toán</h3>
+                {% with payment=order.payments.first %}
+                <p><strong>Phương thức:</strong> {{ payment.method.name }}</p>
+                <p><strong>Trạng thái:</strong> {{ payment.status.name|default:'Pending' }}</p>
+                {% if payment.transaction_id %}
+                <p><strong>Mã GD:</strong> {{ payment.transaction_id }}</p>
+                {% endif %}
+                {% if not payment.payment_date and order.status.name != 'Cancelled' %}
+                <a href="{% url 'cart:payment' order_id=order.order_id %}" class="btn-pay">Thanh toán ngay</a>
+                {% endif %}
+                {% endwith %}
+            </div>
+            {% endif %}
+            
+            <!-- Actions -->
+            <div class="info-card">
+                <h3>Thao tác</h3>
+                <div class="action-buttons">
+                    <a href="{% url 'cart:track' order_id=order.order_id %}" class="btn-action">Theo dõi đơn hàng</a>
+                    {% if order.status.name == 'Pending' or order.status.name == 'Processing' %}
+                    <form method="post" action="{% url 'cart:cancel' order_id=order.order_id %}" 
+                          onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="reason" value="Khách hàng yêu cầu hủy">
+                        <button type="submit" class="btn-cancel">Hủy đơn hàng</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Tracking -->
+    {% if order.tracking.exists %}
+    <div class="tracking-section">
+        <h2>Lịch sử đơn hàng</h2>
+        <div class="tracking-timeline">
+            {% for track in order.tracking.all %}
+            <div class="tracking-item">
+                <div class="tracking-dot"></div>
+                <div class="tracking-content">
+                    <span class="tracking-status">{{ track.status }}</span>
+                    <span class="tracking-time">{{ track.timestamp|date:"d/m/Y H:i" }}</span>
+                    {% if track.description %}
+                    <span class="tracking-desc">{{ track.description }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="{% url 'cart:orders' %}">&larr; Quay lại danh sách đơn hàng</a>
+    </div>
+</div>
+
+<style>
+.order-detail-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e0e7ff;
+}
+.order-header h1 {
+    color: #2563eb;
+    margin: 0;
+}
+.order-date {
+    color: #666;
+    margin-top: 8px;
+}
+.order-status {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+.status-pending { background: #fef3c7; color: #d97706; }
+.status-processing { background: #dbeafe; color: #2563eb; }
+.status-shipped { background: #e0e7ff; color: #4f46e5; }
+.status-delivered { background: #d1fae5; color: #059669; }
+.status-cancelled { background: #fee2e2; color: #dc2626; }
+.order-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 30px;
+}
+.order-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.order-section h2 {
+    color: #2563eb;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e7ff;
+}
+.item-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
+}
+.item-info {
+    display: flex;
+    flex-direction: column;
+}
+.item-title {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+}
+.item-title:hover {
+    color: #2563eb;
+}
+.item-author {
+    font-size: 0.85em;
+    color: #666;
+}
+.item-qty {
+    color: #666;
+}
+.item-price {
+    color: #666;
+}
+.item-subtotal {
+    color: #22c55e;
+    font-weight: 600;
+}
+.order-summary {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 2px solid #e0e7ff;
+}
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+.summary-row.total {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #2563eb;
+    border-top: 1px solid #ddd;
+    padding-top: 12px;
+    margin-top: 8px;
+}
+.summary-row.discount {
+    color: #dc2626;
+}
+.info-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.info-card h3 {
+    color: #2563eb;
+    margin-bottom: 16px;
+    font-size: 1.1em;
+}
+.info-card p {
+    margin: 8px 0;
+    color: #444;
+}
+.btn-pay {
+    display: inline-block;
+    margin-top: 12px;
+    background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+}
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.btn-action {
+    display: block;
+    text-align: center;
+    background: #2563eb;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+}
+.btn-cancel {
+    width: 100%;
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+.tracking-section {
+    margin-top: 30px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.tracking-section h2 {
+    color: #2563eb;
+    margin-bottom: 20px;
+}
+.tracking-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.tracking-timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e0e7ff;
+}
+.tracking-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+.tracking-dot {
+    position: absolute;
+    left: -26px;
+    width: 12px;
+    height: 12px;
+    background: #2563eb;
+    border-radius: 50%;
+}
+.tracking-content {
+    display: flex;
+    flex-direction: column;
+}
+.tracking-status {
+    font-weight: 600;
+    color: #333;
+}
+.tracking-time {
+    font-size: 0.85em;
+    color: #666;
+}
+.tracking-desc {
+    font-size: 0.9em;
+    color: #888;
+    margin-top: 4px;
+}
+.back-link {
+    margin-top: 30px;
+}
+.back-link a {
+    color: #2563eb;
+    text-decoration: none;
+}
+@media (max-width: 768px) {
+    .order-grid {
+        grid-template-columns: 1fr;
+    }
+    .item-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
+</style>
+{% endblock %}

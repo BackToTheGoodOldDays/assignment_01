@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Thông tin tài khoản</h2>
+<ul>
+  <li>Email: {{ customer.email }}</li>
+  <li>Họ tên: {{ customer.name }}</li>
+  <li>Ngày tham gia: {{ customer.date_joined }}</li>
+</ul>
+<a href="{% url 'customer:logout' %}">Đăng xuất</a>
+{% endblock %}
