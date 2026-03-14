@@ -1,0 +1,33 @@
+{% extends 'web/base.html' %}
+{% block title %}Staff Dashboard - BookStore{% endblock %}
+{% block content %}
+<h1 style="margin:20px 0;">Staff Dashboard - Welcome {{ staff.name }}</h1>
+<div class="card">
+    <h2>Book Inventory ({{ books|length }} books)</h2>
+    <table style="margin-top:15px;">
+        <thead><tr><th>ID</th><th>Title</th><th>Price</th><th>Stock</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for book in books %}
+        <tr>
+            <td>{{ book.book_id }}</td>
+            <td>{{ book.title }}</td>
+            <td>${{ book.price }}</td>
+            <td>{% if book.inventory %}{{ book.inventory.quantity }}{% else %}N/A{% endif %}</td>
+            <td>{{ book.status_name|default:"Active" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No books found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="card">
+    <h3>Quick Actions (via API)</h3>
+    <p>Use the REST API to manage books and inventory:</p>
+    <ul style="margin-top:10px;list-style:none;">
+        <li>POST /api/books/ - Add new book</li>
+        <li>POST /api/books/{id}/add_stock/ - Add stock</li>
+        <li>POST /api/inventory-logs/ - Log inventory action</li>
+    </ul>
+</div>
+{% endblock %}

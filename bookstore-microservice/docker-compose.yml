@@ -1,0 +1,260 @@
+version: '3.8'
+
+services:
+  # ── Database ────────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: bookstore-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: paperrose
+      MYSQL_DATABASE: staff_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppaperrose"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ── staff-service ────────────────────────────────────────────────────────────
+  staff-service:
+    build: ./staff-service
+    container_name: bookstore-staff
+    ports:
+      - "8001:8001"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: staff_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+      JWT_SECRET: staff-jwt-secret-docker
+      BOOK_SERVICE_URL: http://book-service:8005
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── manager-service ──────────────────────────────────────────────────────────
+  manager-service:
+    build: ./manager-service
+    container_name: bookstore-manager
+    ports:
+      - "8002:8002"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: manager_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+      JWT_SECRET: manager-jwt-secret-docker
+      BOOK_SERVICE_URL: http://book-service:8005
+      ORDER_SERVICE_URL: http://order-service:8007
+      CUSTOMER_SERVICE_URL: http://customer-service:8003
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── customer-service ─────────────────────────────────────────────────────────
+  customer-service:
+    build: ./customer-service
+    container_name: bookstore-customer
+    ports:
+      - "8003:8003"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: customer_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+      JWT_SECRET: customer-jwt-secret-docker
+      CART_SERVICE_URL: http://cart-service:8006
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── catalog-service ──────────────────────────────────────────────────────────
+  catalog-service:
+    build: ./catalog-service
+    container_name: bookstore-catalog
+    ports:
+      - "8004:8004"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: catalog_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── book-service ─────────────────────────────────────────────────────────────
+  book-service:
+    build: ./book-service
+    container_name: bookstore-book
+    ports:
+      - "8005:8005"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: book_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+      CATALOG_SERVICE_URL: http://catalog-service:8004
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── cart-service ─────────────────────────────────────────────────────────────
+  cart-service:
+    build: ./cart-service
+    container_name: bookstore-cart
+    ports:
+      - "8006:8006"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: cart_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+      BOOK_SERVICE_URL: http://book-service:8005
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── order-service ─────────────────────────────────────────────────────────────
+  order-service:
+    build: ./order-service
+    container_name: bookstore-order
+    ports:
+      - "8007:8007"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: order_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+      CART_SERVICE_URL: http://cart-service:8006
+      BOOK_SERVICE_URL: http://book-service:8005
+      PAY_SERVICE_URL: http://pay-service:8009
+      SHIP_SERVICE_URL: http://ship-service:8008
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── ship-service ─────────────────────────────────────────────────────────────
+  ship-service:
+    build: ./ship-service
+    container_name: bookstore-ship
+    ports:
+      - "8008:8008"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: ship_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── pay-service ──────────────────────────────────────────────────────────────
+  pay-service:
+    build: ./pay-service
+    container_name: bookstore-pay
+    ports:
+      - "8009:8009"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: pay_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── comment-rate-service ─────────────────────────────────────────────────────
+  comment-rate-service:
+    build: ./comment-rate-service
+    container_name: bookstore-comment
+    ports:
+      - "8010:8010"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: comment_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+      BOOK_SERVICE_URL: http://book-service:8005
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── recommender-ai-service ───────────────────────────────────────────────────
+  recommender-ai-service:
+    build: ./recommender-ai-service
+    container_name: bookstore-recommender
+    ports:
+      - "8011:8011"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: recommender_db
+      DB_USER: root
+      DB_PASSWORD: paperrose
+      DB_PORT: "3306"
+      BOOK_SERVICE_URL: http://book-service:8005
+      ORDER_SERVICE_URL: http://order-service:8007
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── api-gateway ──────────────────────────────────────────────────────────────
+  api-gateway:
+    build: ./api-gateway
+    container_name: bookstore-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      STAFF_SERVICE_URL: http://staff-service:8001
+      MANAGER_SERVICE_URL: http://manager-service:8002
+      CUSTOMER_SERVICE_URL: http://customer-service:8003
+      CATALOG_SERVICE_URL: http://catalog-service:8004
+      BOOK_SERVICE_URL: http://book-service:8005
+      CART_SERVICE_URL: http://cart-service:8006
+      ORDER_SERVICE_URL: http://order-service:8007
+      SHIP_SERVICE_URL: http://ship-service:8008
+      PAY_SERVICE_URL: http://pay-service:8009
+      COMMENT_SERVICE_URL: http://comment-rate-service:8010
+      RECOMMENDER_SERVICE_URL: http://recommender-ai-service:8011
+    depends_on:
+      - staff-service
+      - manager-service
+      - customer-service
+      - catalog-service
+      - book-service
+      - cart-service
+      - order-service
+      - ship-service
+      - pay-service
+      - comment-rate-service
+      - recommender-ai-service
+    restart: on-failure
+
+volumes:
+  mysql_data:

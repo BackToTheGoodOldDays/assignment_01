@@ -1,0 +1,29 @@
+{% extends 'web/base.html' %}
+{% block title %}Manager Dashboard - BookStore{% endblock %}
+{% block content %}
+<h1 style="margin:20px 0;">Manager Dashboard - Welcome {{ manager.name }}</h1>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px;">
+    <div class="card" style="text-align:center;">
+        <h3 style="font-size:36px;color:#3498db;">{{ dashboard.total_books|default:"--" }}</h3>
+        <p>Total Books</p>
+    </div>
+    <div class="card" style="text-align:center;">
+        <h3 style="font-size:36px;color:#27ae60;">{{ dashboard.total_orders|default:"--" }}</h3>
+        <p>Total Orders</p>
+    </div>
+    <div class="card" style="text-align:center;">
+        <h3 style="font-size:36px;color:#e74c3c;">{{ dashboard.total_customers|default:"--" }}</h3>
+        <p>Total Customers</p>
+    </div>
+</div>
+<div class="card">
+    <h3>Management via REST API</h3>
+    <ul style="margin-top:10px;list-style:none;">
+        <li>GET /api/orders/ - View all orders</li>
+        <li>PUT /api/orders/{id}/ - Update order status</li>
+        <li>GET /api/customers/ - View customers</li>
+        <li>GET /api/books/ - View catalog</li>
+        <li>PUT /api/payments/{id}/process/ - Process payment</li>
+    </ul>
+</div>
+{% endblock %}

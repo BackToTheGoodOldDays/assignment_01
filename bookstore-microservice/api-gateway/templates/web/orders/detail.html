@@ -1,0 +1,28 @@
+{% extends 'web/base.html' %}
+{% block title %}Order {{ order.order_number }} - BookStore{% endblock %}
+{% block content %}
+<h1 style="margin:20px 0;">Order {{ order.order_number }}</h1>
+<div class="card">
+    <p><strong>Status:</strong> <span class="badge badge-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}warning{% endif %}">{{ order.status }}</span></p>
+    <p><strong>Date:</strong> {{ order.created_at|slice:":10" }}</p>
+    <p><strong>Shipping Address:</strong> {{ order.shipping_address }}</p>
+    <table style="margin-top:15px;">
+        <thead><tr><th>Book</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+        <tbody>
+        {% for item in order.items %}
+        <tr>
+            <td>{{ item.book_title }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.unit_price }}</td>
+            <td>${{ item.subtotal }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div style="text-align:right;margin-top:10px;">
+        <p>Subtotal: ${{ order.subtotal }}</p>
+        <p>Shipping: ${{ order.shipping_fee }}</p>
+        <p><strong>Total: ${{ order.total }}</strong></p>
+    </div>
+</div>
+{% endblock %}

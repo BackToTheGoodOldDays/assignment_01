@@ -82,7 +82,7 @@
         </div>
         
         <div class="form-actions">
-            <a href="{% url 'books:detail' pk=book.book_id %}" class="btn-cancel">Hủy</a>
+            <a href="{% url 'books:detail' book_id=book.book_id %}" class="btn-cancel">Hủy</a>
             <button type="submit" class="btn-submit">Đăng nhận xét</button>
         </div>
     </form>

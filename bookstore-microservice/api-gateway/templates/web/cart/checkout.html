@@ -1,0 +1,28 @@
+{% extends 'web/base.html' %}
+{% block title %}Checkout - BookStore{% endblock %}
+{% block content %}
+<h1 style="margin:20px 0;">Checkout</h1>
+<div class="card">
+    <h3>Order Summary</h3>
+    {% if cart.items %}
+    {% for item in cart.items %}
+    <p>{{ item.quantity }}x Book #{{ item.book_id }} - ${{ item.subtotal }}</p>
+    {% endfor %}
+    <p><strong>Total: ${{ cart.total }}</strong></p>
+    {% endif %}
+</div>
+<div class="card">
+    <h3>Shipping &amp; Payment</h3>
+    <p style="color:#999;">Complete checkout via the API. Use POST /api/orders/ with your cart_id, shipping_method_id, payment_method_id, and shipping_address.</p>
+
+    <h4 style="margin-top:15px;">Available Shipping Methods:</h4>
+    {% for method in shipping_methods %}
+    <p>{{ method.name }} - ${{ method.fee }} ({{ method.estimated_days }} days)</p>
+    {% endfor %}
+
+    <h4 style="margin-top:15px;">Available Payment Methods:</h4>
+    {% for method in payment_methods %}
+    <p>{{ method.name }} ({{ method.code }})</p>
+    {% endfor %}
+</div>
+{% endblock %}

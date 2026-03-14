@@ -109,9 +109,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login/Logout URLs
-LOGIN_URL = 'accounts:login'
+LOGIN_URL = 'customer:login'
 LOGIN_REDIRECT_URL = 'books:catalog'
-LOGOUT_REDIRECT_URL = 'accounts:login'
+LOGOUT_REDIRECT_URL = 'customer:login'
 
 # REST Framework settings
 REST_FRAMEWORK = {

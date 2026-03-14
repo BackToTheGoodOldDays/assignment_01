@@ -1,0 +1,46 @@
+{% extends 'web/base.html' %}
+{% block title %}BookStore - Home{% endblock %}
+{% block content %}
+<h1 style="margin: 20px 0;">Welcome to BookStore</h1>
+
+{% if trending %}
+<div class="card">
+    <h2>Trending Books</h2>
+    <div class="grid" style="margin-top: 15px;">
+        {% for book in trending %}
+        <div class="book-card">
+            {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="{{ book.title }}">{% else %}<div style="height:200px;background:#ecf0f1;display:flex;align-items:center;justify-content:center;">No Image</div>{% endif %}
+            <h3>{{ book.title }}</h3>
+            <p class="price">${{ book.price }}</p>
+            <a href="/books/{{ book.book_id }}/" class="btn" style="width:100%;text-align:center;">View</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>Browse by Category</h2>
+    <div style="margin-top: 10px;">
+        <a href="/books/" class="btn" style="margin:4px;">All Books</a>
+        {% for cat in categories %}
+        <a href="/books/?category={{ cat.category_id }}" class="btn" style="margin:4px;background:#7f8c8d;">{{ cat.name }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card">
+    <h2>Latest Books</h2>
+    <div class="grid" style="margin-top: 15px;">
+        {% for book in books %}
+        <div class="book-card">
+            {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="{{ book.title }}">{% else %}<div style="height:200px;background:#ecf0f1;display:flex;align-items:center;justify-content:center;font-size:40px;">No Image</div>{% endif %}
+            <h3>{{ book.title }}</h3>
+            <p class="price">${{ book.price }}</p>
+            {% if book.avg_rating %}<p>Rating: {{ book.avg_rating }}</p>{% endif %}
+            <a href="/books/{{ book.book_id }}/" class="btn" style="width:100%;text-align:center;margin-top:8px;">View</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

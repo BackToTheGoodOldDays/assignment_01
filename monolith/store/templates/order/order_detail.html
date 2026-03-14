@@ -19,7 +19,7 @@
                 {% for item in order.items.all %}
                 <div class="item-row">
                     <div class="item-info">
-                        <a href="{% url 'books:detail' pk=item.book.book_id %}" class="item-title">
+                        <a href="{% url 'books:detail' book_id=item.book.book_id %}" class="item-title">
                             {{ item.book.title }}
                         </a>
                         <span class="item-author">{{ item.book.author.name }}</span>
@@ -27,6 +27,9 @@
                     <span class="item-qty">x{{ item.quantity }}</span>
                     <span class="item-price">{{ item.unit_price|floatformat:0 }}₫</span>
                     <span class="item-subtotal">{{ item.subtotal|floatformat:0 }}₫</span>
+                    {% if order.status.name == 'Delivered' %}
+                    <a href="{% url 'cart:rate_book' order_id=order.order_id book_id=item.book.book_id %}" class="btn-rate">⭐ Đánh giá</a>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -184,7 +187,7 @@
 }
 .item-row {
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto;
     gap: 16px;
     padding: 12px 0;
     border-bottom: 1px solid #f0f0f0;
@@ -347,6 +350,19 @@
 .back-link a {
     color: #2563eb;
     text-decoration: none;
+}
+.btn-rate {
+    padding: 4px 12px;
+    background: #fbbf24;
+    color: #92400e;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.btn-rate:hover {
+    background: #f59e0b;
 }
 @media (max-width: 768px) {
     .order-grid {

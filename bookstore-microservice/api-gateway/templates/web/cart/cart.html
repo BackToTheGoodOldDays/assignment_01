@@ -1,0 +1,30 @@
+{% extends 'web/base.html' %}
+{% block title %}Cart - BookStore{% endblock %}
+{% block content %}
+<h1 style="margin:20px 0;">Shopping Cart</h1>
+{% if cart.error %}
+<div class="card"><p>{{ cart.error }}</p></div>
+{% elif cart.items %}
+<div class="card">
+    <table>
+        <thead><tr><th>Book</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr></thead>
+        <tbody>
+        {% for item in cart.items %}
+        <tr>
+            <td>{{ item.book_title|default:"Book #" }}{{ item.book_id }}</td>
+            <td>${{ item.unit_price }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.subtotal }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div style="text-align:right;margin-top:15px;">
+        <strong>Total: ${{ cart.total }}</strong>
+        <a href="/checkout/" class="btn btn-success" style="margin-left:15px;">Proceed to Checkout</a>
+    </div>
+</div>
+{% else %}
+<div class="card"><p>Your cart is empty. <a href="/books/">Browse books</a></p></div>
+{% endif %}
+{% endblock %}
